@@ -12,12 +12,12 @@
 
 **Purpose**: Scaffold the planned monorepo structure and baseline toolchain.
 
-- [ ] T001 Scaffold the backend solution and project references in backend/VirtualWardrobe.sln
-- [ ] T002 Scaffold the React SPA workspace and scripts in frontend/package.json
-- [ ] T003 [P] Configure backend linting and static analysis rules in backend/Directory.Build.props
-- [ ] T004 [P] Configure frontend linting, formatting, and Tailwind entry setup in frontend/eslint.config.js
-- [ ] T005 [P] Add backend environment placeholder configuration in backend/.env.example
-- [ ] T006 [P] Add frontend environment placeholder configuration in frontend/.env.example
+- [X] T001 Scaffold the backend solution and project references in backend/VirtualWardrobe.sln
+- [X] T002 Scaffold the React SPA workspace and scripts in frontend/package.json
+- [X] T003 [P] Configure backend linting and static analysis rules in backend/Directory.Build.props
+- [X] T004 [P] Configure frontend linting, formatting, and Tailwind entry setup in frontend/eslint.config.js
+- [X] T005 [P] Add backend environment placeholder configuration in backend/.env.example
+- [X] T006 [P] Add frontend environment placeholder configuration in frontend/.env.example
 
 ---
 
