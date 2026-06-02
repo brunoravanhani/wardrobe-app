@@ -27,15 +27,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T007 Define shared domain primitives, IDs, and base entity behavior in backend/src/VirtualWardrobe.Domain/Common/Entity.cs
-- [ ] T008 [P] Configure the EF Core database context and set registrations in backend/src/VirtualWardrobe.Infrastructure/Persistence/VirtualWardrobeDbContext.cs
-- [ ] T009 Create the initial PostgreSQL migration for users and shared media tables in backend/src/VirtualWardrobe.Infrastructure/Persistence/Migrations/InitialCreate.cs
-- [ ] T010 [P] Implement Google identity verification against OAuth tokens in backend/src/VirtualWardrobe.Infrastructure/Auth/GoogleTokenVerifier.cs
-- [ ] T011 [P] Implement API session issuance and authenticated user resolution in backend/src/VirtualWardrobe.Application/Auth/AuthSessionService.cs
-- [ ] T012 [P] Implement private AWS S3 presigned upload and view URL generation in backend/src/VirtualWardrobe.Infrastructure/Storage/S3PresignedUrlService.cs
-- [ ] T013 Configure API dependency injection, auth, exception handling, and structured logging in backend/src/VirtualWardrobe.Api/Program.cs
-- [ ] T014 [P] Set up frontend app shell, routing, auth bootstrap, and pt-BR providers in frontend/src/app/App.tsx
-- [ ] T015 Create reusable component inventory and reuse guidance for forms, cards, and uploads in frontend/src/components/README.md
+- [X] T007 Define shared domain primitives, IDs, and base entity behavior in backend/src/VirtualWardrobe.Domain/Common/Entity.cs
+- [X] T008 [P] Configure the EF Core database context and set registrations in backend/src/VirtualWardrobe.Infrastructure/Persistence/VirtualWardrobeDbContext.cs
+- [X] T009 Create the initial PostgreSQL migration for users and shared media tables in backend/src/VirtualWardrobe.Infrastructure/Persistence/Migrations/InitialCreate.cs
+- [X] T010 [P] Implement Google identity verification against OAuth tokens in backend/src/VirtualWardrobe.Infrastructure/Auth/GoogleTokenVerifier.cs
+- [X] T011 [P] Implement API session issuance and authenticated user resolution in backend/src/VirtualWardrobe.Application/Auth/AuthSessionService.cs
+- [X] T012 [P] Implement private AWS S3 presigned upload and view URL generation in backend/src/VirtualWardrobe.Infrastructure/Storage/S3PresignedUrlService.cs
+- [X] T013 Configure API dependency injection, auth, exception handling, and structured logging in backend/src/VirtualWardrobe.Api/Program.cs
+- [X] T014 [P] Set up frontend app shell, routing, auth bootstrap, and pt-BR providers in frontend/src/app/App.tsx
+- [X] T015 Create reusable component inventory and reuse guidance for forms, cards, and uploads in frontend/src/components/README.md
 
 **Checkpoint**: Foundation ready. User stories can start after this phase, with US3 additionally depending on both US1 and US2.
 
