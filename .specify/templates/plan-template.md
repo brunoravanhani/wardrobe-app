@@ -46,8 +46,13 @@
   end-to-end/contract where applicable) and confirm fail-before-pass strategy.
 - UX Consistency Gate: Define reusable interaction patterns, terminology constraints,
   and accessibility checks for affected user flows.
+- Reuse Gate: Document component/library reuse discovery performed before proposing
+  net-new components and justify any new component creation.
 - Performance Gate: Declare measurable budgets (latency, throughput, memory, bundle
   size, or render performance as applicable) and verification method.
+- Secret Management Gate: Confirm keys, passwords, tokens, and connection strings are
+  sourced from environment-backed configuration (for example `.env` or
+  `appSettings.json`) and never hardcoded.
 - Observability Gate: Define logs/metrics/traces needed to detect regressions after
   deployment.
 

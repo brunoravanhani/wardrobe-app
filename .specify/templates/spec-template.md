@@ -103,6 +103,8 @@
 - **QR-001**: Changes MUST comply with project linting and static analysis rules.
 - **QR-002**: Complex or duplicated logic introduced by this feature MUST include
   explicit refactor or simplification tasks.
+- **QR-003**: Before creating new components/modules, the team MUST evaluate existing
+  reusable components and document reuse decisions.
 
 ### Testing Requirements *(mandatory)*
 
@@ -125,6 +127,14 @@
   (e.g., p95 latency, memory, bundle size, render smoothness, throughput).
 - **PR-002**: Verification method MUST be defined (benchmark, profiler capture,
   synthetic tests, or production telemetry).
+
+### Configuration and Secrets Requirements *(mandatory)*
+
+- **CSR-001**: Keys, passwords, tokens, and connection strings MUST be read from
+  environment-backed configuration (for example `.env` or `appSettings.json`) and MUST
+  NOT be hardcoded in source code.
+- **CSR-002**: Repository configuration examples MUST use placeholders and MUST NOT
+  contain real secrets.
 
 ### Key Entities *(include if feature involves data)*
 

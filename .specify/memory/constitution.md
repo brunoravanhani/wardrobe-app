@@ -1,15 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: N/A (template) -> 1.0.0
+- Version change: 1.0.0 -> 1.1.0
 - Modified principles:
-	- Template Principle 1 -> I. Code Quality Is Non-Negotiable
-	- Template Principle 2 -> II. Testing Is a Delivery Gate
-	- Template Principle 3 -> III. UX Consistency Is Product Quality
-	- Template Principle 4 -> IV. Performance Budgets Are Requirements
-	- Template Principle 5 -> V. Observable and Safe Evolution
+	- I. Code Quality Is Non-Negotiable -> I. Code Quality and Reuse Are Non-Negotiable
+	- V. Observable and Safe Evolution -> V. Secure Configuration and Safe Evolution
 - Added sections:
-	- Engineering Standards and Constraints
-	- Delivery Workflow and Quality Gates
+	- None
 - Removed sections:
 	- None
 - Templates requiring updates:
@@ -26,10 +22,13 @@ Sync Impact Report
 
 ## Core Principles
 
-### I. Code Quality Is Non-Negotiable
+### I. Code Quality and Reuse Are Non-Negotiable
 All production code MUST pass linting, static analysis, and peer review before merge.
 Complex functions MUST be refactored when readability or maintainability degrades, and
 public behavior changes MUST be documented in the related spec or task artifact.
+Before creating a new component, developers MUST search for an existing reusable
+component and extend or compose it when feasible; new components MUST include a brief
+justification when reuse is not possible.
 Rationale: Consistent quality reduces defects, onboarding time, and long-term maintenance
 cost.
 
@@ -53,11 +52,16 @@ them before release. Any change that risks latency, throughput, memory, bundle s
 render smoothness MUST include profiling evidence and explicit mitigation tasks.
 Rationale: Performance is a core user expectation, not a post-release optimization.
 
-### V. Observable and Safe Evolution
+### V. Secure Configuration and Safe Evolution
+Keys, connection strings, passwords, and equivalent secrets MUST NOT be hardcoded in
+source files. They MUST be loaded from environment-backed configuration such as `.env`
+or secure runtime configuration files like `appSettings.json` with environment-specific
+overrides and secret-management controls.
 Behavioral changes MUST include structured logging and diagnostics sufficient for root
 cause analysis. Breaking changes to APIs, contracts, or user flows MUST be called out in
 specs and release notes with migration guidance when applicable.
-Rationale: Observability and explicit change management enable safe, continuous delivery.
+Rationale: Secure configuration, observability, and explicit change management enable
+safe, continuous delivery.
 
 ## Engineering Standards and Constraints
 
@@ -66,14 +70,20 @@ Rationale: Observability and explicit change management enable safe, continuous 
 - Treat unresolved quality, UX, or performance risks as blockers for release readiness.
 - Keep architecture and implementation decisions traceable to user stories and success
 	criteria.
+- Keep secrets outside source code and out of version control; provide example config
+	files that contain placeholders only.
+- Prefer composition and extension of existing components over net-new components to
+	maintain a coherent design system and reduce duplication.
 - When requirements are unclear, document assumptions explicitly and resolve them before
 	coding high-risk areas.
 
 ## Delivery Workflow and Quality Gates
 
-1. Planning MUST define quality, testing, UX consistency, and performance gates.
+1. Planning MUST define quality, testing, UX consistency, performance, reuse, and secret
+	management gates.
 2. Implementation MUST satisfy failing-then-passing automated tests for changed behavior.
-3. Review MUST verify coding standards, UX consistency checks, and performance evidence.
+3. Review MUST verify coding standards, component reuse checks, secure configuration,
+	UX consistency checks, and performance evidence.
 4. Pre-release validation MUST confirm no unresolved high-severity defects or budget
 	 violations.
 5. Deployment approval MUST include documented rollback and monitoring expectations.
@@ -94,4 +104,4 @@ Compliance review expectations:
 - Exceptions MUST be time-bound, documented, and approved by maintainers.
 - Periodic reviews SHOULD validate that templates and agent guidance remain aligned.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-02 | **Last Amended**: 2026-06-02
+**Version**: 1.1.0 | **Ratified**: 2026-06-02 | **Last Amended**: 2026-06-02

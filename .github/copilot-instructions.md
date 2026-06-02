@@ -4,4 +4,6 @@ shell commands, and other important information, read the current plan
 and the project constitution at .specify/memory/constitution.md.
 Treat constitution gates for code quality, testing, UX consistency, and
 performance as mandatory during planning and implementation.
+Also enforce constitution rules for secret management and component
+reusability before introducing new components.
 <!-- SPECKIT END -->
