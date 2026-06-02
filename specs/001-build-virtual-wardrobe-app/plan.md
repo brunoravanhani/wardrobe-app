@@ -8,6 +8,8 @@
 
 Build a Portuguese-Brazil web product for personal wardrobe and wishlist management using a React SPA and a layered .NET Web API backed by PostgreSQL. The solution includes Google login, fixed v1 categories, private-by-default media handling, single target price for wishlist, and purchased-history conversion into wardrobe with measurable UX/performance gates and full automated test coverage across unit, integration, and end-to-end/contract layers.
 
+Implementation sequencing is backend-first then frontend for each user story from US1 onward, and backend architecture enforces Repository Pattern, Result Pattern, rich domain entities, and a thin Program.cs composition root.
+
 ## Technical Context
 
 **Language/Version**: TypeScript (frontend, React 18+), C# 12 on .NET 8 (backend), SQL (PostgreSQL 15+)
@@ -28,6 +30,14 @@ Build a Portuguese-Brazil web product for personal wardrobe and wishlist managem
 
 **Scale/Scope**: Initial release for low-to-medium usage (up to ~5k monthly active users, up to ~100k item records total) with clear migration path for category and scale expansion
 
+## Architectural Decisions
+
+- Repository Pattern is mandatory for application-layer data access. Application handlers depend on repository interfaces; infrastructure provides implementations.
+- Result Pattern is mandatory for expected success/failure flows in domain and application operations.
+- Rich domain entities are required: aggregates encapsulate invariants and behavior, not only data bags.
+- Program.cs must remain a thin composition root that only orchestrates extension methods/modules.
+- From US1 onward, each user story is delivered in two phases: backend first, frontend second.
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
@@ -36,6 +46,7 @@ Build a Portuguese-Brazil web product for personal wardrobe and wishlist managem
 - Testing Gate: PASS. Define fail-first then pass criteria for unit, integration, e2e, and contract tests for every changed flow.
 - UX Consistency Gate: PASS. Maintain consistent pt-BR terminology across wardrobe/wishlist; define keyboard/accessibility checks for forms, upload controls, and state transitions.
 - Reuse Gate: PASS. Reuse shared form, card, and validation primitives before introducing new components; reuse backend cross-cutting abstractions (result/error handling, validation pipeline).
+- Architecture Gate: PASS. Repository and Result patterns are mandatory, rich domain entities are required, and Program.cs remains thin by convention and review checks.
 - Performance Gate: PASS. Enforce p95 budgets from spec with synthetic journey timing in CI and targeted profile captures for list and conversion flows.
 - Secret Management Gate: PASS. Google credentials, DB connection, AWS access settings, and bucket configuration will be environment-backed only; no hardcoded sensitive values.
 - Observability Gate: PASS. Define structured logs for auth, S3 upload/view URL issuance, and conversion flows plus metrics for latency/error rate and conversion success.
@@ -95,6 +106,13 @@ Research decisions are recorded in [research.md](./research.md) and resolve all 
 - Data model documented in [data-model.md](./data-model.md)
 - API contracts documented in [contracts/wardrobe-api.openapi.yaml](./contracts/wardrobe-api.openapi.yaml)
 - Developer setup and execution flow documented in [quickstart.md](./quickstart.md)
+
+## Delivery Sequencing
+
+- US1: backend phase first, then frontend phase.
+- US2: backend phase first, then frontend phase.
+- US3: backend phase first, then frontend phase.
+- Polish starts after frontend completion for all in-scope user stories.
 
 ## Post-Design Constitution Check
 

@@ -23,6 +23,9 @@ The front-end should be in Portuguese Brazil and the code, classes and method in
 - Q: After conversion to wardrobe, how should wishlist items be displayed? -> A: Keep as purchased history, hidden from active wishlist by default.
 - Q: Which image upload constraints should apply? -> A: Accept JPG/PNG/WebP only, max 10 MB per image.
 - Q: How should categories be managed in v1? -> A: Fixed predefined categories only.
+- Q: Which backend architectural patterns are mandatory? -> A: Repository Pattern, Result Pattern, and rich domain entities with explicit invariants/behaviors.
+- Q: How should API startup configuration be structured? -> A: Keep Program.cs minimal, only orchestrating extension method calls.
+- Q: How should implementation sequencing be organized from US1 onward? -> A: Backend phase first, then frontend phase for each user story.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -105,6 +108,10 @@ As an authenticated user, I can mark wishlist items as purchased and convert the
 - **QR-001**: Changes MUST comply with project linting and static analysis rules.
 - **QR-002**: Complex or duplicated logic introduced by this feature MUST include explicit refactor or simplification tasks.
 - **QR-003**: Before creating new components/modules, the team MUST evaluate existing reusable components and document reuse decisions.
+- **QR-004**: Backend data access in application handlers MUST use repository interfaces; direct DbContext access in application layer is NOT allowed.
+- **QR-005**: Application and domain operations MUST return explicit Result success/failure contracts instead of exception-driven control flow for expected validation/business outcomes.
+- **QR-006**: Domain entities and aggregates MUST be rich (encapsulated state, invariants, and behavior methods) and MUST avoid an anemic domain model.
+- **QR-007**: API startup wiring MUST keep Program.cs as a thin composition root and delegate detailed configuration to extension methods/modules.
 
 ### Testing Requirements *(mandatory)*
 
@@ -113,6 +120,7 @@ As an authenticated user, I can mark wishlist items as purchased and convert the
 - **TR-003**: The feature MUST define end-to-end tests for: Google sign-in, wardrobe item lifecycle, wishlist item lifecycle, and purchased-to-wardrobe conversion.
 - **TR-004**: Test scenarios for changed behavior MUST fail before implementation and pass after implementation.
 - **TR-005**: The feature MUST define negative tests for invalid image format and files above 10 MB for both wardrobe and wishlist uploads.
+- **TR-006**: The feature MUST include automated tests validating repository-only application data access and Result success/failure mapping behavior.
 
 ### UX Consistency and Accessibility Requirements *(mandatory for user-facing changes)*
 
@@ -159,3 +167,4 @@ As an authenticated user, I can mark wishlist items as purchased and convert the
 - The v1 release uses only predefined clothing categories and does not include custom category creation.
 - Uploaded item images are limited to JPG, PNG, or WebP and to 10 MB maximum per file.
 - Users may maintain historical purchased wishlist records even after converting them into wardrobe items.
+- Delivery from US1 onward is split into backend-first then frontend phases for each user story.
