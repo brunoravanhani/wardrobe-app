@@ -1,0 +1,465 @@
+openapi: 3.0.3
+info:
+  title: Virtual Wardrobe API
+  version: 1.0.0
+  description: API contract for wardrobe and wishlist management.
+servers:
+  - url: https://api.virtual-wardrobe.local
+security:
+  - bearerAuth: []
+paths:
+  /v1/auth/google/exchange:
+    post:
+      summary: Exchange Google identity proof for API session token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken]
+              properties:
+                idToken:
+                  type: string
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+        '401':
+          description: Invalid Google identity token
+
+  /v1/wardrobe-items:
+    get:
+      summary: List wardrobe items for current user
+      parameters:
+        - in: query
+          name: category
+          schema:
+            $ref: '#/components/schemas/ClothingCategory'
+      responses:
+        '200':
+          description: Wardrobe items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WardrobeItem'
+    post:
+      summary: Create wardrobe item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWardrobeItemRequest'
+      responses:
+        '201':
+          description: Wardrobe item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WardrobeItem'
+        '400':
+          description: Validation failure
+
+  /v1/wardrobe-items/{itemId}:
+    patch:
+      summary: Update wardrobe item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWardrobeItemRequest'
+      responses:
+        '200':
+          description: Wardrobe item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WardrobeItem'
+        '404':
+          description: Item not found
+    delete:
+      summary: Delete wardrobe item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      responses:
+        '204':
+          description: Deleted
+
+  /v1/wishlist-items:
+    get:
+      summary: List wishlist items for current user
+      parameters:
+        - in: query
+          name: includePurchased
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Wishlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WishlistItem'
+    post:
+      summary: Create wishlist item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWishlistItemRequest'
+      responses:
+        '201':
+          description: Wishlist item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistItem'
+        '400':
+          description: Validation failure
+
+  /v1/wishlist-items/{itemId}:
+    patch:
+      summary: Update wishlist item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWishlistItemRequest'
+      responses:
+        '200':
+          description: Wishlist item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistItem'
+    delete:
+      summary: Delete wishlist item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      responses:
+        '204':
+          description: Deleted
+
+  /v1/wishlist-items/{itemId}/purchase:
+    post:
+      summary: Mark wishlist item as purchased
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      responses:
+        '200':
+          description: Updated wishlist item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishlistItem'
+        '409':
+          description: Already purchased
+
+  /v1/wishlist-items/{itemId}/convert-to-wardrobe:
+    post:
+      summary: Convert purchased wishlist item to wardrobe item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertWishlistItemRequest'
+      responses:
+        '200':
+          description: Conversion result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [wishlistItem, wardrobeItem]
+                properties:
+                  wishlistItem:
+                    $ref: '#/components/schemas/WishlistItem'
+                  wardrobeItem:
+                    $ref: '#/components/schemas/WardrobeItem'
+        '400':
+          description: Missing required wardrobe data
+        '409':
+          description: Already converted
+
+  /v1/media/upload-url:
+    post:
+      summary: Create AWS S3 presigned upload target for private image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fileName, contentType, fileSizeBytes]
+              properties:
+                fileName:
+                  type: string
+                purpose:
+                  type: string
+                  enum: [WardrobeBodyImage, WardrobeCareTagImage, WishlistInspirationImage]
+                contentType:
+                  type: string
+                  enum: [image/jpeg, image/png, image/webp]
+                fileSizeBytes:
+                  type: integer
+                  maximum: 10485760
+      responses:
+        '200':
+          description: S3 upload URL and media token
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mediaAssetId, uploadUrl, uploadMethod, expiresAtUtc]
+                properties:
+                  mediaAssetId:
+                    type: string
+                    format: uuid
+                  uploadUrl:
+                    type: string
+                    format: uri
+                  uploadMethod:
+                    type: string
+                    enum: [PUT]
+                  requiredHeaders:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  expiresAtUtc:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid media constraints
+
+  /v1/media/{mediaAssetId}/view-url:
+    post:
+      summary: Create short-lived owner-only AWS S3 presigned view URL
+      parameters:
+        - in: path
+          name: mediaAssetId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Presigned S3 view URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, expiresAtUtc]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  expiresAtUtc:
+                    type: string
+                    format: date-time
+        '403':
+          description: Not owner of media asset
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ItemId:
+      in: path
+      name: itemId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    ClothingCategory:
+      type: string
+      enum: [TShirt, Shirt, Pants, Trousers, Shorts, Coats, Shoes]
+    AuthSession:
+      type: object
+      required: [accessToken, expiresAtUtc]
+      properties:
+        accessToken:
+          type: string
+        expiresAtUtc:
+          type: string
+          format: date-time
+    WardrobeItem:
+      type: object
+      required: [id, category, name, size]
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: '#/components/schemas/ClothingCategory'
+        name:
+          type: string
+        brand:
+          type: string
+          nullable: true
+        size:
+          type: string
+        price:
+          type: number
+          format: decimal
+          nullable: true
+        bodyImageAssetId:
+          type: string
+          format: uuid
+          nullable: true
+        careTagImageAssetId:
+          type: string
+          format: uuid
+          nullable: true
+    WishlistItem:
+      type: object
+      required: [id, category, name, targetPrice, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: '#/components/schemas/ClothingCategory'
+        name:
+          type: string
+        brand:
+          type: string
+          nullable: true
+        targetPrice:
+          type: number
+          format: decimal
+        inspirationImageAssetId:
+          type: string
+          format: uuid
+          nullable: true
+        links:
+          type: array
+          items:
+            type: string
+            format: uri
+        status:
+          type: string
+          enum: [Active, Purchased]
+        convertedWardrobeItemId:
+          type: string
+          format: uuid
+          nullable: true
+    CreateWardrobeItemRequest:
+      type: object
+      required: [category, name, size]
+      properties:
+        category:
+          $ref: '#/components/schemas/ClothingCategory'
+        name:
+          type: string
+        brand:
+          type: string
+        size:
+          type: string
+        price:
+          type: number
+          format: decimal
+        bodyImageAssetId:
+          type: string
+          format: uuid
+        careTagImageAssetId:
+          type: string
+          format: uuid
+    UpdateWardrobeItemRequest:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/ClothingCategory'
+        name:
+          type: string
+        brand:
+          type: string
+        size:
+          type: string
+        price:
+          type: number
+          format: decimal
+        bodyImageAssetId:
+          type: string
+          format: uuid
+        careTagImageAssetId:
+          type: string
+          format: uuid
+    CreateWishlistItemRequest:
+      type: object
+      required: [category, name, targetPrice]
+      properties:
+        category:
+          $ref: '#/components/schemas/ClothingCategory'
+        name:
+          type: string
+        brand:
+          type: string
+        targetPrice:
+          type: number
+          format: decimal
+        links:
+          type: array
+          items:
+            type: string
+            format: uri
+        inspirationImageAssetId:
+          type: string
+          format: uuid
+    UpdateWishlistItemRequest:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/ClothingCategory'
+        name:
+          type: string
+        brand:
+          type: string
+        targetPrice:
+          type: number
+          format: decimal
+        links:
+          type: array
+          items:
+            type: string
+            format: uri
+        inspirationImageAssetId:
+          type: string
+          format: uuid
+    ConvertWishlistItemRequest:
+      type: object
+      properties:
+        size:
+          type: string
+        price:
+          type: number
+          format: decimal
+        bodyImageAssetId:
+          type: string
+          format: uuid
+        careTagImageAssetId:
+          type: string
+          format: uuid
