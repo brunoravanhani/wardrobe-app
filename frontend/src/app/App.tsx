@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from 'react-router-dom'
 import { useMemo } from 'react'
 import { AppProviders } from './providers/AppProviders'
 import { useAuthSession, type AuthBootstrapState } from './providers/auth-context'
+import { WardrobePage } from '../features/wardrobe/WardrobePage'
 
 function GuardedContent() {
   const auth = useAuthSession()
@@ -23,20 +24,9 @@ function GuardedContent() {
 
   return (
     <Routes>
-      <Route path="/" element={<WardrobePlaceholder />} />
+      <Route path="/" element={<WardrobePage />} />
       <Route path="/wishlist" element={<WishlistPlaceholder />} />
     </Routes>
-  )
-}
-
-function WardrobePlaceholder() {
-  return (
-    <section className="rounded-xl border border-amber-300 bg-white/85 p-6 shadow-sm">
-      <h2 className="mb-2 text-2xl font-semibold text-slate-900">Guarda-roupa</h2>
-      <p className="text-slate-700">
-        Base de navegação e autenticação pronta. CRUD de peças será implementado na fase de US1.
-      </p>
-    </section>
   )
 }
 

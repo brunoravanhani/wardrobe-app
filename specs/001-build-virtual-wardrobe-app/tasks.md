@@ -80,14 +80,14 @@
 
 ### Tests for User Story 1 Frontend (REQUIRED) ⚠️
 
-- [ ] T019 [P] [US1-FE] Add end-to-end coverage for wardrobe creation, edit, and filtering in frontend/tests/e2e/wardrobe.spec.ts
+- [X] T019 [P] [US1-FE] Add end-to-end coverage for wardrobe creation, edit, and filtering in frontend/tests/e2e/wardrobe.spec.ts
 
 ### Implementation for User Story 1 Frontend
 
-- [ ] T026 [P] [US1-FE] Implement the wardrobe API client and DTO mapping in frontend/src/services/wardrobeApi.ts
-- [ ] T027 [US1-FE] Implement the wardrobe page with category tabs and item list state in frontend/src/features/wardrobe/WardrobePage.tsx
-- [ ] T028 [US1-FE] Implement the wardrobe item form with image upload and pt-BR validation messages in frontend/src/features/wardrobe/components/WardrobeItemForm.tsx
-- [ ] T029 [US1-FE] Document wardrobe-specific component reuse decisions in frontend/src/features/wardrobe/README.md
+- [X] T026 [P] [US1-FE] Implement the wardrobe API client and DTO mapping in frontend/src/services/wardrobeApi.ts
+- [X] T027 [US1-FE] Implement the wardrobe page with category tabs and item list state in frontend/src/features/wardrobe/WardrobePage.tsx
+- [X] T028 [US1-FE] Implement the wardrobe item form with image upload and pt-BR validation messages in frontend/src/features/wardrobe/components/WardrobeItemForm.tsx
+- [X] T029 [US1-FE] Document wardrobe-specific component reuse decisions in frontend/src/features/wardrobe/README.md
 
 **Checkpoint**: User Story 1 is independently functional and represents the MVP.
 
@@ -113,6 +113,7 @@
 - [ ] T066 [US2-BE] Define repository interfaces for wishlist aggregate and queries in backend/src/VirtualWardrobe.Application/Wishlist/Interfaces.cs
 - [ ] T036 [US2-BE] Implement wishlist create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/CreateWishlistItemCommand.cs
 - [ ] T037 [US2-BE] Map wishlist persistence, link ownership, and default active filtering including repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WishlistItemConfiguration.cs
+- [ ] T069 [US2-BE] Add EF Core migration for wishlist tables, relationships, and indexes in backend/src/VirtualWardrobe.Infrastructure/Persistence/Migrations/20260603_AddWishlistSchema.cs
 - [ ] T038 [US2-BE] Implement wishlist CRUD and history filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
 
 **Checkpoint**: US2 backend is independently functional and stable.

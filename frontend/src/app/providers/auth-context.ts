@@ -8,7 +8,7 @@ export type AuthBootstrapState = {
 export type AuthSessionState =
   | { status: 'loading' }
   | { status: 'anonymous' }
-  | { status: 'authenticated'; email: string }
+  | { status: 'authenticated'; email: string; accessToken: string }
 
 export const AuthContext = createContext<AuthSessionState>({ status: 'loading' })
 
@@ -17,7 +17,7 @@ export function createInitialAuthState(bootstrap: AuthBootstrapState): AuthSessi
   const email = window.localStorage.getItem(`${bootstrap.sessionStorageKey}:email`)
 
   if (token && email) {
-    return { status: 'authenticated', email }
+    return { status: 'authenticated', email, accessToken: token }
   }
 
   return { status: 'anonymous' }

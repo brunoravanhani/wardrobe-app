@@ -39,6 +39,40 @@ Create local environment files with placeholders only.
 4. Sign in with Google and validate wardrobe/wishlist core flows.
 5. Confirm the S3 bucket has Block Public Access enabled before media tests.
 
+## 3.1 Database Versioning and Migrations
+
+- Migration authority: EF Core migrations are the only supported relational schema change mechanism.
+- Naming convention: use timestamped names (example: `20260603_AddWishlistIndexes`) to preserve deterministic ordering.
+- Source control: migration files and model snapshots must be committed with the related feature change.
+
+Recommended commands:
+
+```bash
+# create migration
+cd backend
+dotnet ef migrations add 20260603_AddWishlistIndexes \
+	--project src/VirtualWardrobe.Infrastructure \
+	--startup-project src/VirtualWardrobe.Api
+
+# generate reviewed SQL script for release pipeline
+dotnet ef migrations script \
+	--project src/VirtualWardrobe.Infrastructure \
+	--startup-project src/VirtualWardrobe.Api \
+	--idempotent \
+	--output ./artifacts/sql/wardrobe-migrations.sql
+
+# apply latest migration locally
+dotnet ef database update \
+	--project src/VirtualWardrobe.Infrastructure \
+	--startup-project src/VirtualWardrobe.Api
+```
+
+Rollback guidance:
+
+- Prefer roll-forward with a correcting migration in shared environments.
+- Use down migration rollback only for controlled local/dev recovery.
+- Validate migration execution by checking `__EFMigrationsHistory` after deployment.
+
 Example command sequence (adjust when scaffolding exists):
 
 ```bash
