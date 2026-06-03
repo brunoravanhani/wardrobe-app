@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualWardrobe.Application.Auth;
 using VirtualWardrobe.Application.Storage;
+using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Infrastructure.Auth;
+using VirtualWardrobe.Infrastructure.Persistence.Configurations;
 using VirtualWardrobe.Infrastructure.Persistence;
 using VirtualWardrobe.Infrastructure.Storage;
 
@@ -75,7 +77,10 @@ public static class DependencyInjection
         services.AddScoped<IGoogleTokenVerifier, GoogleTokenVerifier>();
         services.AddScoped<IUserIdentityStore, EfUserIdentityStore>();
         services.AddScoped<IPrivateMediaUrlService, S3PresignedUrlService>();
+        services.AddScoped<IWardrobeItemRepository, EfWardrobeItemRepository>();
+        services.AddScoped<IMediaAssetRepository, EfMediaAssetRepository>();
         services.AddScoped<AuthSessionService>();
+        services.AddScoped<CreateWardrobeItemCommand>();
 
         return services;
     }

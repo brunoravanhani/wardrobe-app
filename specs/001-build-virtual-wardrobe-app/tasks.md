@@ -49,24 +49,24 @@
 
 ### Tests for User Story 1 Backend (REQUIRED) ⚠️
 
-- [ ] T016 [P] [US1-BE] Add unit tests for wardrobe and media validation rules in backend/tests/VirtualWardrobe.UnitTests/Wardrobe/WardrobeValidationTests.cs
-- [ ] T017 [P] [US1-BE] Add integration tests for wardrobe CRUD, category filtering, and owner isolation in backend/tests/VirtualWardrobe.IntegrationTests/Wardrobe/WardrobeItemTests.cs
-- [ ] T018 [P] [US1-BE] Add contract tests for auth exchange, wardrobe CRUD, and media presign endpoints in backend/tests/VirtualWardrobe.ContractTests/Wardrobe/WardrobeContractTests.cs
-- [ ] T059 [P] [US1-BE] Add unit tests for Result pattern success/failure flows and domain error mapping in backend/tests/VirtualWardrobe.UnitTests/Common/ResultPatternTests.cs
-- [ ] T060 [P] [US1-BE] Add integration tests for repository-backed handlers (no direct DbContext usage in application layer) in backend/tests/VirtualWardrobe.IntegrationTests/Architecture/RepositoryPatternTests.cs
-- [ ] T064 [P] [US1-BE] Add negative tests for invalid image format and files above 10 MB in wardrobe media endpoints in backend/tests/VirtualWardrobe.ContractTests/Wardrobe/WardrobeMediaValidationContractTests.cs
+- [X] T016 [P] [US1-BE] Add unit tests for wardrobe and media validation rules in backend/tests/VirtualWardrobe.UnitTests/Wardrobe/WardrobeValidationTests.cs
+- [X] T017 [P] [US1-BE] Add integration tests for wardrobe CRUD, category filtering, and owner isolation in backend/tests/VirtualWardrobe.IntegrationTests/Wardrobe/WardrobeItemTests.cs
+- [X] T018 [P] [US1-BE] Add contract tests for auth exchange, wardrobe CRUD, and media presign endpoints in backend/tests/VirtualWardrobe.ContractTests/Wardrobe/WardrobeContractTests.cs
+- [X] T059 [P] [US1-BE] Add unit tests for Result pattern success/failure flows and domain error mapping in backend/tests/VirtualWardrobe.UnitTests/Common/ResultPatternTests.cs
+- [X] T060 [P] [US1-BE] Add integration tests for repository-backed handlers (no direct DbContext usage in application layer) in backend/tests/VirtualWardrobe.IntegrationTests/Architecture/RepositoryPatternTests.cs
+- [X] T064 [P] [US1-BE] Add negative tests for invalid image format and files above 10 MB in wardrobe media endpoints in backend/tests/VirtualWardrobe.ContractTests/Wardrobe/WardrobeMediaValidationContractTests.cs
 
 ### Implementation for User Story 1 Backend
 
-- [ ] T020 [P] [US1-BE] Create the media asset aggregate with rich behaviors and ownership invariants in backend/src/VirtualWardrobe.Domain/Media/MediaAsset.cs
-- [ ] T021 [P] [US1-BE] Create the wardrobe item aggregate with rich behaviors and category constraints in backend/src/VirtualWardrobe.Domain/Wardrobe/WardrobeItem.cs
-- [ ] T061 [US1-BE] Introduce Result base types and domain/application error contracts in backend/src/VirtualWardrobe.Application/Common/Result.cs
-- [ ] T062 [US1-BE] Extract API configuration into extension methods and keep Program.cs as thin composition root in backend/src/VirtualWardrobe.Api/Program.cs
-- [ ] T063 [US1-BE] Define repository interfaces for wardrobe and media in backend/src/VirtualWardrobe.Application/Wardrobe/Interfaces.cs
-- [ ] T022 [US1-BE] Implement wardrobe create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wardrobe/CreateWardrobeItemCommand.cs
-- [ ] T023 [US1-BE] Map wardrobe and media persistence rules and repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WardrobeItemConfiguration.cs
-- [ ] T024 [US1-BE] Implement private media upload/view endpoints with Result-aware error handling in backend/src/VirtualWardrobe.Api/Controllers/MediaController.cs
-- [ ] T025 [US1-BE] Implement wardrobe CRUD and category filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WardrobeItemsController.cs
+- [X] T020 [P] [US1-BE] Create the media asset aggregate with rich behaviors and ownership invariants in backend/src/VirtualWardrobe.Domain/Media/MediaAsset.cs
+- [X] T021 [P] [US1-BE] Create the wardrobe item aggregate with rich behaviors and category constraints in backend/src/VirtualWardrobe.Domain/Wardrobe/WardrobeItem.cs
+- [X] T061 [US1-BE] Introduce Result base types and domain/application error contracts in backend/src/VirtualWardrobe.Application/Common/Result.cs
+- [X] T062 [US1-BE] Extract API configuration into extension methods and keep Program.cs as thin composition root in backend/src/VirtualWardrobe.Api/Program.cs
+- [X] T063 [US1-BE] Define repository interfaces for wardrobe and media in backend/src/VirtualWardrobe.Application/Wardrobe/Interfaces.cs
+- [X] T022 [US1-BE] Implement wardrobe create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wardrobe/CreateWardrobeItemCommand.cs
+- [X] T023 [US1-BE] Map wardrobe and media persistence rules and repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WardrobeItemConfiguration.cs
+- [X] T024 [US1-BE] Implement private media upload/view endpoints with Result-aware error handling in backend/src/VirtualWardrobe.Api/Controllers/MediaController.cs
+- [X] T025 [US1-BE] Implement wardrobe CRUD and category filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WardrobeItemsController.cs
 
 **Checkpoint**: US1 backend is independently functional and architecture guardrails are enforced.
 

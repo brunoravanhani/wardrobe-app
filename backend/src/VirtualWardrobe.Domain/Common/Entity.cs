@@ -46,3 +46,9 @@ public readonly record struct MediaAssetId(Guid Value)
     public static MediaAssetId New() => new(Guid.NewGuid());
     public override string ToString() => Value.ToString();
 }
+
+public readonly record struct WardrobeItemId(Guid Value)
+{
+    public static WardrobeItemId New() => new(Guid.NewGuid());
+    public override string ToString() => Value.ToString();
+}

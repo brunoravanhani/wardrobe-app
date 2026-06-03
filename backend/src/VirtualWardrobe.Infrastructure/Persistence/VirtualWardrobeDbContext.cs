@@ -16,6 +16,8 @@ public sealed class VirtualWardrobeDbContext : DbContext
 
     public DbSet<MediaAssetRecord> MediaAssets => Set<MediaAssetRecord>();
 
+    public DbSet<WardrobeItemRecord> WardrobeItems => Set<WardrobeItemRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
