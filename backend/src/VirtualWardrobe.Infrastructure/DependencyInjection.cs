@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VirtualWardrobe.Application.Auth;
 using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Application.Wardrobe;
+using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Infrastructure.Auth;
 using VirtualWardrobe.Infrastructure.Persistence.Configurations;
 using VirtualWardrobe.Infrastructure.Persistence;
@@ -78,9 +79,11 @@ public static class DependencyInjection
         services.AddScoped<IUserIdentityStore, EfUserIdentityStore>();
         services.AddScoped<IPrivateMediaUrlService, S3PresignedUrlService>();
         services.AddScoped<IWardrobeItemRepository, EfWardrobeItemRepository>();
+        services.AddScoped<IWishlistItemRepository, EfWishlistItemRepository>();
         services.AddScoped<IMediaAssetRepository, EfMediaAssetRepository>();
         services.AddScoped<AuthSessionService>();
         services.AddScoped<CreateWardrobeItemCommand>();
+        services.AddScoped<CreateWishlistItemCommand>();
 
         return services;
     }

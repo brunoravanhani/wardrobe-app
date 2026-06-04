@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using VirtualWardrobe.Application.Auth;
 using VirtualWardrobe.Infrastructure;
 
@@ -18,6 +19,39 @@ public static class ApiHostingExtensions
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Virtual Wardrobe API",
+                Version = "v1",
+                Description = "API for managing virtual wardrobe functionality"
+            });
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "JWT Authorization header using the Bearer scheme"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
+
         builder.Services.AddApiAuthentication(builder.Configuration);
         return builder;
     }
@@ -26,6 +60,13 @@ public static class ApiHostingExtensions
     {
         app.UseExceptionHandler();
         app.UseHttpsRedirection();
+
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Virtual Wardrobe API v1");
+        });
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

@@ -101,20 +101,20 @@
 
 ### Tests for User Story 2 Backend (REQUIRED) ⚠️
 
-- [ ] T030 [P] [US2-BE] Add unit tests for wishlist target-price and external-link validation in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistValidationTests.cs
-- [ ] T031 [P] [US2-BE] Add integration tests for wishlist CRUD, history filtering defaults, and duplicate-link rejection in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistItemTests.cs
-- [ ] T032 [P] [US2-BE] Add contract tests for wishlist CRUD endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistContractTests.cs
-- [ ] T065 [P] [US2-BE] Add negative tests for invalid image format and files above 10 MB in wishlist inspiration endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistMediaValidationContractTests.cs
+- [X] T030 [P] [US2-BE] Add unit tests for wishlist target-price and external-link validation in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistValidationTests.cs
+- [X] T031 [P] [US2-BE] Add integration tests for wishlist CRUD, history filtering defaults, and duplicate-link rejection in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistItemTests.cs
+- [X] T032 [P] [US2-BE] Add contract tests for wishlist CRUD endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistContractTests.cs
+- [X] T065 [P] [US2-BE] Add negative tests for invalid image format and files above 10 MB in wishlist inspiration endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistMediaValidationContractTests.cs
 
 ### Implementation for User Story 2 Backend
 
-- [ ] T034 [P] [US2-BE] Create the wishlist item aggregate with rich behaviors and status defaults in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistItem.cs
-- [ ] T035 [P] [US2-BE] Create the wishlist external link entity with duplicate protection rules in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistExternalLink.cs
-- [ ] T066 [US2-BE] Define repository interfaces for wishlist aggregate and queries in backend/src/VirtualWardrobe.Application/Wishlist/Interfaces.cs
-- [ ] T036 [US2-BE] Implement wishlist create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/CreateWishlistItemCommand.cs
-- [ ] T037 [US2-BE] Map wishlist persistence, link ownership, and default active filtering including repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WishlistItemConfiguration.cs
-- [ ] T069 [US2-BE] Add EF Core migration for wishlist tables, relationships, and indexes in backend/src/VirtualWardrobe.Infrastructure/Persistence/Migrations/20260603_AddWishlistSchema.cs
-- [ ] T038 [US2-BE] Implement wishlist CRUD and history filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
+- [X] T034 [P] [US2-BE] Create the wishlist item aggregate with rich behaviors and status defaults in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistItem.cs
+- [X] T035 [P] [US2-BE] Create the wishlist external link entity with duplicate protection rules in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistExternalLink.cs
+- [X] T066 [US2-BE] Define repository interfaces for wishlist aggregate and queries in backend/src/VirtualWardrobe.Application/Wishlist/Interfaces.cs
+- [X] T036 [US2-BE] Implement wishlist create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/CreateWishlistItemCommand.cs
+- [X] T037 [US2-BE] Map wishlist persistence, link ownership, and default active filtering including repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WishlistItemConfiguration.cs
+- [X] T069 [US2-BE] Add EF Core migration for wishlist tables, relationships, and indexes in backend/src/VirtualWardrobe.Infrastructure/Persistence/Migrations/20260603_AddWishlistSchema.cs
+- [X] T038 [US2-BE] Implement wishlist CRUD and history filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
 
 **Checkpoint**: US2 backend is independently functional and stable.
 
