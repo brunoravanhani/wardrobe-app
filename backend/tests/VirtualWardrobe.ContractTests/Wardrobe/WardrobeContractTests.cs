@@ -55,7 +55,7 @@ public sealed class WardrobeContractTests
 
         var createAction = await controller.CreateAsync(
             new CreateWardrobeItemRequest(
-                ClothingCategory.TShirt,
+                "TShirt",
                 "Camiseta",
                 "M",
                 "Marca",
@@ -70,7 +70,7 @@ public sealed class WardrobeContractTests
         var updateAction = await controller.UpdateAsync(
             createdItem.Id,
             new UpdateWardrobeItemRequest(
-                ClothingCategory.Shirt,
+                "Shirt",
                 "Camisa",
                 "G",
                 "Outra",

@@ -35,11 +35,19 @@ public sealed class WardrobeItemsController : ControllerBase
         [FromBody] CreateWardrobeItemRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryParseCategory(request.Category, out var category))
+        {
+            return Problem(
+                title: "Wardrobe request failed",
+                detail: "Invalid category.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var ownerUserId = User.GetRequiredUserId();
         var result = await _createWardrobeItemCommand.CreateAsync(
             new CreateWardrobeItemInput(
                 ownerUserId,
-                request.Category,
+                category,
                 request.Name,
                 request.Size,
                 request.Brand,
@@ -57,12 +65,20 @@ public sealed class WardrobeItemsController : ControllerBase
         [FromBody] UpdateWardrobeItemRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryParseCategory(request.Category, out var category))
+        {
+            return Problem(
+                title: "Wardrobe request failed",
+                detail: "Invalid category.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var ownerUserId = User.GetRequiredUserId();
         var result = await _createWardrobeItemCommand.UpdateAsync(
             new UpdateWardrobeItemInput(
                 itemId,
                 ownerUserId,
-                request.Category,
+                category,
                 request.Name,
                 request.Size,
                 request.Brand,
@@ -123,6 +139,12 @@ public sealed class WardrobeItemsController : ControllerBase
         return Problem(title: "Wardrobe request failed", detail: error.Message, statusCode: statusCode);
     }
 
+    private static bool TryParseCategory(string category, out ClothingCategory parsedCategory)
+    {
+        return Enum.TryParse(category, true, out parsedCategory)
+               && Enum.IsDefined(parsedCategory);
+    }
+
     private static WardrobeItemResponse Map(WardrobeItem item)
     {
         return new WardrobeItemResponse(
@@ -138,7 +160,7 @@ public sealed class WardrobeItemsController : ControllerBase
 }
 
 public sealed record CreateWardrobeItemRequest(
-    ClothingCategory Category,
+    string Category,
     string Name,
     string Size,
     string? Brand,
@@ -147,7 +169,7 @@ public sealed record CreateWardrobeItemRequest(
     Guid? CareTagImageAssetId);
 
 public sealed record UpdateWardrobeItemRequest(
-    ClothingCategory Category,
+    string Category,
     string Name,
     string Size,
     string? Brand,

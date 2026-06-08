@@ -19,6 +19,21 @@ public static class ApiHostingExtensions
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+        var allowedOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>() ?? [];
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+
         builder.Services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo
@@ -60,6 +75,7 @@ public static class ApiHostingExtensions
     {
         app.UseExceptionHandler();
         app.UseHttpsRedirection();
+        app.UseCors();
 
         app.UseSwagger();
         app.UseSwaggerUI(options =>

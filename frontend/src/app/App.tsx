@@ -1,38 +1,29 @@
-import { NavLink, Route, Routes } from 'react-router-dom'
-import { useMemo } from 'react'
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { useMemo, type ReactElement } from 'react'
 import { AppProviders } from './providers/AppProviders'
-import { useAuthSession, type AuthBootstrapState } from './providers/auth-context'
+import { useAuthActions, useAuthSession, type AuthBootstrapState } from './providers/auth-context'
 import { WardrobePage } from '../features/wardrobe/WardrobePage'
 import { WishlistPage } from '../features/wishlist/WishlistPage'
+import { LoginPage } from '../features/auth/LoginPage'
 
-function GuardedContent() {
+function RequireAuth({ children }: { children: ReactElement }) {
   const auth = useAuthSession()
+  const location = useLocation()
 
   if (auth.status === 'loading') {
     return <p className="text-center text-slate-700">Carregando sessao...</p>
   }
 
   if (auth.status === 'anonymous') {
-    return (
-      <section className="mx-auto max-w-xl rounded-xl border border-amber-300 bg-white/80 p-6 shadow-sm">
-        <h2 className="mb-2 text-2xl font-semibold text-slate-900">Bem-vinda(o) ao Virtual Wardrobe</h2>
-        <p className="text-slate-700">
-          Faça login com Google para acessar guarda-roupa e wishlist com dados privados.
-        </p>
-      </section>
-    )
+    return <Navigate to="/login" replace state={{ from: location }} />
   }
 
-  return (
-    <Routes>
-      <Route path="/" element={<WardrobePage />} />
-      <Route path="/wishlist" element={<WishlistPage />} />
-    </Routes>
-  )
+  return children
 }
 
 function AppFrame() {
   const auth = useAuthSession()
+  const { signOut } = useAuthActions()
   const authLabel = useMemo(() => {
     if (auth.status === 'loading') {
       return 'Inicializando autenticação...'
@@ -51,14 +42,44 @@ function AppFrame() {
         <p className="mb-1 text-sm uppercase tracking-wide text-amber-900">Virtual Wardrobe</p>
         <h1 className="text-3xl font-semibold text-slate-950">Catálogo Pessoal e Wishlist</h1>
         <p className="mt-2 text-slate-700">{authLabel}</p>
+        {auth.status === 'authenticated' ? (
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="mt-3 rounded-md border border-amber-700 bg-white px-3 py-1.5 text-sm font-medium text-amber-800"
+          >
+            Sair
+          </button>
+        ) : null}
       </header>
 
-      <nav className="flex flex-wrap gap-2">
-        <ShellLink to="/">Guarda-roupa</ShellLink>
-        <ShellLink to="/wishlist">Wishlist</ShellLink>
-      </nav>
+      {auth.status === 'authenticated' ? (
+        <nav className="flex flex-wrap gap-2">
+          <ShellLink to="/">Guarda-roupa</ShellLink>
+          <ShellLink to="/wishlist">Wishlist</ShellLink>
+        </nav>
+      ) : null}
 
-      <GuardedContent />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <WardrobePage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <RequireAuth>
+              <WishlistPage />
+            </RequireAuth>
+          }
+        />
+        <Route path="/login" element={auth.status === 'authenticated' ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </main>
   )
 }
