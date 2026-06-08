@@ -1,5 +1,6 @@
 import {
   CLOTHING_CATEGORIES,
+  type WardrobeItem,
   type ClothingCategory,
 } from './wardrobeApi'
 
@@ -28,6 +29,21 @@ export type UpsertWishlistItemInput = {
 }
 
 export type WishlistApiClient = ReturnType<typeof createWishlistApi>
+
+export type ConvertWishlistItemInput = {
+  name?: string | null
+  category?: ClothingCategory | null
+  size: string
+  brand?: string | null
+  price?: number | null
+  bodyImageAssetId?: string | null
+  careTagImageAssetId?: string | null
+}
+
+export type WishlistConversionResult = {
+  wishlistItemId: string
+  wardrobeItem: WardrobeItem
+}
 
 export type CreateUploadUrlResponse = {
   mediaAssetId: string
@@ -101,8 +117,23 @@ export function createWishlistApi(options: WishlistApiClientOptions) {
     },
 
     markAsPurchased(itemId: string) {
-      return requestJson<WishlistItem>(`/v1/wishlist-items/${itemId}/purchase`, {
+      return requestJson<WishlistItem>(`/v1/wishlist-items/${itemId}/mark-purchased`, {
         method: 'POST',
+      })
+    },
+
+    convertToWardrobe(itemId: string, input: ConvertWishlistItemInput) {
+      return requestJson<WishlistConversionResult>(`/v1/wishlist-items/${itemId}/convert`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: normalizeText(input.name),
+          category: input.category ?? null,
+          size: input.size.trim(),
+          brand: normalizeText(input.brand),
+          price: typeof input.price === 'number' ? input.price : null,
+          bodyImageAssetId: input.bodyImageAssetId ?? null,
+          careTagImageAssetId: input.careTagImageAssetId ?? null,
+        }),
       })
     },
 

@@ -12,6 +12,10 @@ import {
   type WishlistItemFormInitialValues,
   type WishlistItemFormValues,
 } from './components/WishlistItemForm'
+import {
+  ConvertWishlistItemDialog,
+  type ConvertWishlistItemDialogValues,
+} from './components/ConvertWishlistItemDialog'
 
 type ViewMode = 'active' | 'history'
 
@@ -41,7 +45,10 @@ export function WishlistPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [conversionError, setConversionError] = useState<string | null>(null)
+  const [conversionSuccessMessage, setConversionSuccessMessage] = useState<string | null>(null)
   const [editor, setEditor] = useState<EditorState | null>(null)
+  const [itemToConvert, setItemToConvert] = useState<WishlistItem | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('active')
 
   const loadItems = useCallback(async () => {
@@ -133,6 +140,34 @@ export function WishlistPage() {
     }
   }
 
+  async function handleConvertToWardrobe(values: ConvertWishlistItemDialogValues) {
+    if (!itemToConvert) {
+      return
+    }
+
+    setConversionError(null)
+    setIsSaving(true)
+
+    try {
+      await api.convertToWardrobe(itemToConvert.id, {
+        name: values.name,
+        category: values.category,
+        size: values.size,
+        brand: values.brand,
+        price: values.price,
+      })
+
+      setItemToConvert(null)
+      setConversionSuccessMessage('Convertido para guarda-roupa com sucesso.')
+      await loadItems()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Nao foi possivel converter o item.'
+      setConversionError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function uploadImage(file: File | null) {
     if (!file) {
       return null
@@ -201,6 +236,21 @@ export function WishlistPage() {
         </div>
       ) : null}
 
+      {itemToConvert ? (
+        <ConvertWishlistItemDialog
+          item={itemToConvert}
+          busy={isSaving}
+          submitError={conversionError}
+          onCancel={() => {
+            setItemToConvert(null)
+            setConversionError(null)
+          }}
+          onSubmit={handleConvertToWardrobe}
+        />
+      ) : null}
+
+      {conversionSuccessMessage ? <p className="mb-3 text-sm text-emerald-800">{conversionSuccessMessage}</p> : null}
+
       {errorMessage ? <p className="mb-3 text-sm text-red-700">{errorMessage}</p> : null}
       {isLoading ? <p className="text-slate-700">Carregando wishlist...</p> : null}
 
@@ -232,6 +282,20 @@ export function WishlistPage() {
                   </button>
                 ) : null}
 
+                {item.status === 'Purchased' && !item.convertedWardrobeItemId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setItemToConvert(item)
+                      setConversionError(null)
+                      setConversionSuccessMessage(null)
+                    }}
+                    className="rounded-md border border-emerald-700 bg-emerald-700 px-3 py-1.5 text-sm text-white"
+                  >
+                    Converter para guarda-roupa
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -247,6 +311,10 @@ export function WishlistPage() {
 
             <dl className="space-y-1 text-sm text-slate-700">
               <MetaRow label="Status" value={toStatusLabel(item.status)} />
+              <MetaRow
+                label="Conversao"
+                value={item.convertedWardrobeItemId ? 'Convertido' : 'Nao convertido'}
+              />
               <MetaRow label="Marca" value={item.brand ?? 'Nao informada'} />
               <MetaRow label="Preco alvo" value={formatPrice(item.targetPrice)} />
               <MetaRow label="Links" value={item.links.length > 0 ? item.links.join(', ') : 'Nao informados'} />

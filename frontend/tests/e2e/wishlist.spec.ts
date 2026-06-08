@@ -75,8 +75,8 @@ test('cria, edita e alterna entre wishlist ativa e historico', async ({ page }) 
       return
     }
 
-    if (endpoint.startsWith('/v1/wishlist-items/') && endpoint.endsWith('/purchase') && method === 'POST') {
-      const itemId = endpoint.replace('/v1/wishlist-items/', '').replace('/purchase', '')
+    if (endpoint.startsWith('/v1/wishlist-items/') && endpoint.endsWith('/mark-purchased') && method === 'POST') {
+      const itemId = endpoint.replace('/v1/wishlist-items/', '').replace('/mark-purchased', '')
       const target = items.find((item) => item.id === itemId)
 
       if (!target) {

@@ -173,14 +173,14 @@
 
 ### Tests for User Story 3 Frontend (REQUIRED) ⚠️
 
-- [ ] T046 [P] [US3-FE] Add end-to-end coverage for purchase and convert flows in frontend/tests/e2e/wishlist-conversion.spec.ts
+- [X] T046 [P] [US3-FE] Add end-to-end coverage for purchase and convert flows in frontend/tests/e2e/wishlist-conversion.spec.ts
 
 ### Implementation for User Story 3 Frontend
 
-- [ ] T050 [P] [US3-FE] Extend the wishlist API client for purchase and conversion actions in frontend/src/services/wishlistApi.ts
-- [ ] T051 [US3-FE] Implement purchased-history actions and conversion entry points in frontend/src/features/wishlist/WishlistPage.tsx
-- [ ] T052 [US3-FE] Implement the missing-field conversion dialog in frontend/src/features/wishlist/components/ConvertWishlistItemDialog.tsx
-- [ ] T053 [US3-FE] Document conversion-flow reuse decisions in frontend/src/features/wishlist/README.md
+- [X] T050 [P] [US3-FE] Extend the wishlist API client for purchase and conversion actions in frontend/src/services/wishlistApi.ts
+- [X] T051 [US3-FE] Implement purchased-history actions and conversion entry points in frontend/src/features/wishlist/WishlistPage.tsx
+- [X] T052 [US3-FE] Implement the missing-field conversion dialog in frontend/src/features/wishlist/components/ConvertWishlistItemDialog.tsx
+- [X] T053 [US3-FE] Document conversion-flow reuse decisions in frontend/src/features/wishlist/README.md
 
 **Checkpoint**: All user stories are functional, and conversion behavior is independently testable.
 
