@@ -1,60 +1,58 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useDraftState } from '../../../app/providers/DraftStateProvider'
 import {
   CLOTHING_CATEGORIES,
   getCategoryLabelPtBr,
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
-import { useDraftState } from '../../../app/providers/DraftStateProvider'
+import { isClothingCategory } from '../../../services/wishlistApi'
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
-export type WardrobeItemFormValues = {
+export type WishlistItemFormValues = {
   category: ClothingCategory
   name: string
-  size: string
   brand: string | null
-  price: number | null
-  bodyImageFile: File | null
-  careTagImageFile: File | null
+  targetPrice: number
+  links: string[]
+  inspirationImageFile: File | null
 }
 
-export type WardrobeItemFormInitialValues = {
+export type WishlistItemFormInitialValues = {
   category: ClothingCategory
   name: string
-  size: string
   brand: string | null
-  price: number | null
+  targetPrice: number
+  links: string[]
 }
 
-type WardrobeItemFormProps = {
+type WishlistItemFormProps = {
   mode: 'create' | 'edit'
-  initialValues?: WardrobeItemFormInitialValues
+  initialValues?: WishlistItemFormInitialValues
   draftStorageKey?: string
   busy?: boolean
   submitError?: string | null
   onCancel: () => void
-  onSubmit: (values: WardrobeItemFormValues) => Promise<void>
+  onSubmit: (values: WishlistItemFormValues) => Promise<void>
 }
 
 type FormErrors = {
-  category?: string
   name?: string
-  size?: string
-  price?: string
-  bodyImageFile?: string
-  careTagImageFile?: string
+  targetPrice?: string
+  inspirationImageFile?: string
+  links?: string
 }
 
-const defaultValues: WardrobeItemFormInitialValues = {
+const defaultValues: WishlistItemFormInitialValues = {
   category: 'TShirt',
   name: '',
-  size: '',
   brand: null,
-  price: null,
+  targetPrice: 0,
+  links: [],
 }
 
-export function WardrobeItemForm({
+export function WishlistItemForm({
   mode,
   initialValues,
   draftStorageKey,
@@ -62,8 +60,9 @@ export function WardrobeItemForm({
   submitError,
   onCancel,
   onSubmit,
-}: WardrobeItemFormProps) {
+}: WishlistItemFormProps) {
   const draftState = useDraftState()
+
   const values = useMemo(() => {
     if (initialValues) {
       return initialValues
@@ -79,13 +78,13 @@ export function WardrobeItemForm({
     }
 
     try {
-      const parsed = JSON.parse(rawDraft) as Partial<WardrobeItemFormInitialValues>
+      const parsed = JSON.parse(rawDraft) as Partial<WishlistItemFormInitialValues>
       return {
-        category: isCategory(parsed.category) ? parsed.category : defaultValues.category,
+        category: isClothingCategory(parsed.category) ? parsed.category : defaultValues.category,
         name: typeof parsed.name === 'string' ? parsed.name : defaultValues.name,
-        size: typeof parsed.size === 'string' ? parsed.size : defaultValues.size,
         brand: typeof parsed.brand === 'string' || parsed.brand === null ? parsed.brand : defaultValues.brand,
-        price: typeof parsed.price === 'number' || parsed.price === null ? parsed.price : defaultValues.price,
+        targetPrice: typeof parsed.targetPrice === 'number' ? parsed.targetPrice : defaultValues.targetPrice,
+        links: Array.isArray(parsed.links) ? parsed.links.filter((value): value is string => typeof value === 'string') : [],
       }
     } catch {
       return defaultValues
@@ -94,11 +93,10 @@ export function WardrobeItemForm({
 
   const [category, setCategory] = useState<ClothingCategory>(values.category)
   const [name, setName] = useState(values.name)
-  const [size, setSize] = useState(values.size)
   const [brand, setBrand] = useState(values.brand ?? '')
-  const [price, setPrice] = useState(values.price !== null ? formatEditablePrice(values.price) : '')
-  const [bodyImageFile, setBodyImageFile] = useState<File | null>(null)
-  const [careTagImageFile, setCareTagImageFile] = useState<File | null>(null)
+  const [targetPrice, setTargetPrice] = useState(values.targetPrice > 0 ? formatEditablePrice(values.targetPrice) : '')
+  const [linksInput, setLinksInput] = useState(values.links.join('\n'))
+  const [inspirationImageFile, setInspirationImageFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
 
   useEffect(() => {
@@ -111,16 +109,15 @@ export function WardrobeItemForm({
       JSON.stringify({
         category,
         name,
-        size,
         brand: brand.trim() ? brand.trim() : null,
-        price: parsePrice(price),
+        targetPrice: parsePrice(targetPrice) ?? 0,
+        links: parseLinks(linksInput),
       }),
     )
-  }, [brand, category, draftState, draftStorageKey, mode, name, price, size])
+  }, [brand, category, draftState, draftStorageKey, linksInput, mode, name, targetPrice])
 
-  const title = mode === 'create' ? 'Nova peca do guarda-roupa' : 'Editar peca do guarda-roupa'
-
-  const submitLabel = mode === 'create' ? 'Salvar peca' : 'Salvar alteracoes'
+  const title = mode === 'create' ? 'Novo item da wishlist' : 'Editar item da wishlist'
+  const submitLabel = mode === 'create' ? 'Salvar desejo' : 'Salvar alteracoes'
 
   const categoryOptions = useMemo(
     () =>
@@ -137,45 +134,38 @@ export function WardrobeItemForm({
     const nextErrors: FormErrors = {}
 
     if (!name.trim()) {
-      nextErrors.name = 'Nome da peca e obrigatorio.'
+      nextErrors.name = 'Nome do item e obrigatorio.'
     }
 
-    if (!size.trim()) {
-      nextErrors.size = 'Tamanho e obrigatorio.'
+    const parsedPrice = parsePrice(targetPrice)
+    if (parsedPrice === null) {
+      nextErrors.targetPrice = 'Preco alvo obrigatorio. Use numeros positivos, ex.: 299,90.'
+    } else if (parsedPrice < 0) {
+      nextErrors.targetPrice = 'Preco alvo nao pode ser negativo.'
     }
 
-    const parsedPrice = parsePrice(price)
-    if (price.trim().length > 0 && parsedPrice === null) {
-      nextErrors.price = 'Preco invalido. Use numeros positivos, ex.: 199,90.'
+    const linkValidationError = validateLinks(linksInput)
+    if (linkValidationError) {
+      nextErrors.links = linkValidationError
     }
 
-    if (parsedPrice !== null && parsedPrice < 0) {
-      nextErrors.price = 'Preco nao pode ser negativo.'
-    }
-
-    const bodyImageError = validateImage(bodyImageFile)
-    if (bodyImageError) {
-      nextErrors.bodyImageFile = bodyImageError
-    }
-
-    const careTagError = validateImage(careTagImageFile)
-    if (careTagError) {
-      nextErrors.careTagImageFile = careTagError
+    const imageError = validateImage(inspirationImageFile)
+    if (imageError) {
+      nextErrors.inspirationImageFile = imageError
     }
 
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length > 0 || parsedPrice === null) {
       return
     }
 
     await onSubmit({
       category,
       name: name.trim(),
-      size: size.trim(),
       brand: brand.trim() ? brand.trim() : null,
-      price: parsedPrice,
-      bodyImageFile,
-      careTagImageFile,
+      targetPrice: parsedPrice,
+      links: parseLinks(linksInput),
+      inspirationImageFile,
     })
   }
 
@@ -183,15 +173,15 @@ export function WardrobeItemForm({
     <form
       onSubmit={handleSubmit}
       className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm"
-      aria-label="Formulario de peca"
+      aria-label="Formulario de item da wishlist"
     >
       <h3 className="mb-4 text-lg font-semibold text-slate-900">{title}</h3>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="category">
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-category">
           Categoria
           <select
-            id="category"
+            id="wishlist-category"
             name="category"
             className="rounded-md border border-slate-300 px-3 py-2"
             value={category}
@@ -203,41 +193,26 @@ export function WardrobeItemForm({
               </option>
             ))}
           </select>
-          {errors.category ? <span className="text-sm text-red-700">{errors.category}</span> : null}
         </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="name">
-          Nome da peca
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-name">
+          Nome do item
           <input
-            id="name"
+            id="wishlist-name"
             name="name"
             className="rounded-md border border-slate-300 px-3 py-2"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Ex.: Camiseta basica azul"
+            placeholder="Ex.: Jaqueta jeans"
             required
           />
           {errors.name ? <span className="text-sm text-red-700">{errors.name}</span> : null}
         </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="size">
-          Tamanho
-          <input
-            id="size"
-            name="size"
-            className="rounded-md border border-slate-300 px-3 py-2"
-            value={size}
-            onChange={(event) => setSize(event.target.value)}
-            placeholder="Ex.: M"
-            required
-          />
-          {errors.size ? <span className="text-sm text-red-700">{errors.size}</span> : null}
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="brand">
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-brand">
           Marca
           <input
-            id="brand"
+            id="wishlist-brand"
             name="brand"
             className="rounded-md border border-slate-300 px-3 py-2"
             value={brand}
@@ -246,46 +221,46 @@ export function WardrobeItemForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="price">
-          Preco (R$)
+        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-targetPrice">
+          Preco alvo (R$)
           <input
-            id="price"
-            name="price"
+            id="wishlist-targetPrice"
+            name="targetPrice"
             className="rounded-md border border-slate-300 px-3 py-2"
-            value={price}
-            onChange={(event) => setPrice(event.target.value)}
-            placeholder="Ex.: 199,90"
+            value={targetPrice}
+            onChange={(event) => setTargetPrice(event.target.value)}
+            placeholder="Ex.: 299,90"
             inputMode="decimal"
+            required
           />
-          {errors.price ? <span className="text-sm text-red-700">{errors.price}</span> : null}
+          {errors.targetPrice ? <span className="text-sm text-red-700">{errors.targetPrice}</span> : null}
         </label>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="bodyImageFile">
-          Foto da peca (JPG, PNG ou WebP)
-          <input
-            id="bodyImageFile"
-            name="bodyImageFile"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(event) => setBodyImageFile(event.target.files?.[0] ?? null)}
-          />
-          {errors.bodyImageFile ? <span className="text-sm text-red-700">{errors.bodyImageFile}</span> : null}
-        </label>
+      <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-links">
+        Links externos
+        <textarea
+          id="wishlist-links"
+          name="links"
+          className="min-h-24 rounded-md border border-slate-300 px-3 py-2"
+          value={linksInput}
+          onChange={(event) => setLinksInput(event.target.value)}
+          placeholder="https://loja.exemplo/item\nhttps://outro.exemplo/item"
+        />
+        {errors.links ? <span className="text-sm text-red-700">{errors.links}</span> : null}
+      </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="careTagImageFile">
-          Foto da etiqueta de cuidado (JPG, PNG ou WebP)
-          <input
-            id="careTagImageFile"
-            name="careTagImageFile"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(event) => setCareTagImageFile(event.target.files?.[0] ?? null)}
-          />
-          {errors.careTagImageFile ? <span className="text-sm text-red-700">{errors.careTagImageFile}</span> : null}
-        </label>
-      </div>
+      <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-inspirationImageFile">
+        Imagem de inspiracao (JPG, PNG ou WebP)
+        <input
+          id="wishlist-inspirationImageFile"
+          name="inspirationImageFile"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => setInspirationImageFile(event.target.files?.[0] ?? null)}
+        />
+        {errors.inspirationImageFile ? <span className="text-sm text-red-700">{errors.inspirationImageFile}</span> : null}
+      </label>
 
       {submitError ? <p className="mt-3 text-sm text-red-700">{submitError}</p> : null}
 
@@ -328,6 +303,29 @@ function formatEditablePrice(value: number) {
   return value.toFixed(2).replace('.', ',')
 }
 
+function parseLinks(value: string): string[] {
+  return value
+    .split(/\n|,/) 
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+}
+
+function validateLinks(value: string): string | null {
+  const links = parseLinks(value)
+  for (const link of links) {
+    try {
+      const parsed = new URL(link)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return 'Use apenas links com http:// ou https://.'
+      }
+    } catch {
+      return 'Informe links validos separados por linha.'
+    }
+  }
+
+  return null
+}
+
 function validateImage(file: File | null): string | null {
   if (!file) {
     return null
@@ -342,8 +340,4 @@ function validateImage(file: File | null): string | null {
   }
 
   return null
-}
-
-function isCategory(value: unknown): value is ClothingCategory {
-  return typeof value === 'string' && CLOTHING_CATEGORIES.includes(value as ClothingCategory)
 }

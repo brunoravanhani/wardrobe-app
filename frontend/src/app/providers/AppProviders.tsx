@@ -4,6 +4,7 @@ import {
 } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthContext, createInitialAuthState, type AuthBootstrapState } from './auth-context'
+import { DraftStateProvider } from './DraftStateProvider'
 
 export function AppProviders({
   bootstrap,
@@ -17,7 +18,9 @@ export function AppProviders({
 
   return (
     <AuthContext.Provider value={authState}>
-      <BrowserRouter>{children}</BrowserRouter>
+      <DraftStateProvider>
+        <BrowserRouter>{children}</BrowserRouter>
+      </DraftStateProvider>
     </AuthContext.Provider>
   )
 }

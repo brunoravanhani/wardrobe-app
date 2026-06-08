@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { AppProviders } from './providers/AppProviders'
 import { useAuthSession, type AuthBootstrapState } from './providers/auth-context'
 import { WardrobePage } from '../features/wardrobe/WardrobePage'
+import { WishlistPage } from '../features/wishlist/WishlistPage'
 
 function GuardedContent() {
   const auth = useAuthSession()
@@ -25,19 +26,8 @@ function GuardedContent() {
   return (
     <Routes>
       <Route path="/" element={<WardrobePage />} />
-      <Route path="/wishlist" element={<WishlistPlaceholder />} />
+      <Route path="/wishlist" element={<WishlistPage />} />
     </Routes>
-  )
-}
-
-function WishlistPlaceholder() {
-  return (
-    <section className="rounded-xl border border-amber-300 bg-white/85 p-6 shadow-sm">
-      <h2 className="mb-2 text-2xl font-semibold text-slate-900">Wishlist</h2>
-      <p className="text-slate-700">
-        Fluxo base de rotas disponível. Recursos completos de wishlist entram na fase de US2.
-      </p>
-    </section>
   )
 }
 

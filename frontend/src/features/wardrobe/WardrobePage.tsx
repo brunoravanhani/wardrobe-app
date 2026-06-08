@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthSession } from '../../app/providers/auth-context'
+import { useDraftState } from '../../app/providers/DraftStateProvider'
 import {
   CLOTHING_CATEGORIES,
   createWardrobeApi,
@@ -24,6 +25,7 @@ type EditorState =
 
 export function WardrobePage() {
   const auth = useAuthSession()
+  const draftState = useDraftState()
   const accessToken = auth.status === 'authenticated' ? auth.accessToken : null
   const api = useMemo(
     () =>
@@ -122,6 +124,7 @@ export function WardrobePage() {
           bodyImageAssetId,
           careTagImageAssetId,
         })
+        draftState.clearDraft('wardrobe-item:create')
       }
 
       setEditor(null)
@@ -197,8 +200,10 @@ export function WardrobePage() {
       {editor ? (
         <div className="mb-4">
           <WardrobeItemForm
+            key={editor.mode === 'edit' ? `edit-${editor.item.id}` : 'create'}
             mode={editor.mode}
             initialValues={formInitialValues}
+            draftStorageKey={editor.mode === 'create' ? 'wardrobe-item:create' : undefined}
             busy={isSaving}
             submitError={submitError}
             onCancel={() => setEditor(null)}

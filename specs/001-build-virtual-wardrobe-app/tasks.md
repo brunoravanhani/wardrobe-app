@@ -128,16 +128,16 @@
 
 ### Tests for User Story 2 Frontend (REQUIRED) ⚠️
 
-- [ ] T033 [P] [US2-FE] Add end-to-end coverage for wishlist create and edit flows in frontend/tests/e2e/wishlist.spec.ts
-- [ ] T067 [P] [US2-FE] Add end-to-end coverage for unsaved form draft protection and recovery in frontend/tests/e2e/wishlist-unsaved-draft.spec.ts
+- [X] T033 [P] [US2-FE] Add end-to-end coverage for wishlist create and edit flows in frontend/tests/e2e/wishlist.spec.ts
+- [X] T067 [P] [US2-FE] Add end-to-end coverage for unsaved form draft protection and recovery in frontend/tests/e2e/wishlist-unsaved-draft.spec.ts
 
 ### Implementation for User Story 2 Frontend
 
-- [ ] T039 [P] [US2-FE] Implement the wishlist API client and DTO mapping in frontend/src/services/wishlistApi.ts
-- [ ] T040 [US2-FE] Implement the wishlist page with active and history views in frontend/src/features/wishlist/WishlistPage.tsx
-- [ ] T041 [US2-FE] Implement the wishlist form with target price, links, and inspiration upload in frontend/src/features/wishlist/components/WishlistItemForm.tsx
-- [ ] T068 [US2-FE] Implement unsaved draft persistence and recovery for wardrobe and wishlist forms in frontend/src/app/providers/DraftStateProvider.tsx
-- [ ] T042 [US2-FE] Document wishlist-specific component reuse decisions in frontend/src/features/wishlist/README.md
+- [X] T039 [P] [US2-FE] Implement the wishlist API client and DTO mapping in frontend/src/services/wishlistApi.ts
+- [X] T040 [US2-FE] Implement the wishlist page with active and history views in frontend/src/features/wishlist/WishlistPage.tsx
+- [X] T041 [US2-FE] Implement the wishlist form with target price, links, and inspiration upload in frontend/src/features/wishlist/components/WishlistItemForm.tsx
+- [X] T068 [US2-FE] Implement unsaved draft persistence and recovery for wardrobe and wishlist forms in frontend/src/app/providers/DraftStateProvider.tsx
+- [X] T042 [US2-FE] Document wishlist-specific component reuse decisions in frontend/src/features/wishlist/README.md
 
 **Checkpoint**: User Stories 1 and 2 are independently functional and can be demoed separately.
 
