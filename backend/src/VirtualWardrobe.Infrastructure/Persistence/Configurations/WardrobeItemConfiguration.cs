@@ -50,6 +50,28 @@ public sealed class EfWardrobeItemRepository : IWardrobeItemRepository
         await _dbContext.WardrobeItems.AddAsync(ToRecord(item), cancellationToken);
     }
 
+    public async Task UpdateAsync(WardrobeItem item, CancellationToken cancellationToken)
+    {
+        var record = await _dbContext.WardrobeItems.SingleOrDefaultAsync(
+            x => x.Id == item.Id.Value && x.UserId == item.OwnerUserId.Value,
+            cancellationToken);
+
+        if (record is null)
+        {
+            return;
+        }
+
+        record.Category = item.Category.ToString();
+        record.Name = item.Name;
+        record.Brand = item.Brand;
+        record.Size = item.Size;
+        record.Price = item.Price;
+        record.BodyImageAssetId = item.BodyImageAssetId?.Value;
+        record.CareTagImageAssetId = item.CareTagImageAssetId?.Value;
+        record.CreatedAtUtc = item.CreatedAtUtc;
+        record.UpdatedAtUtc = item.UpdatedAtUtc;
+    }
+
     public async Task<WardrobeItem?> GetByIdAsync(WardrobeItemId itemId, UserId ownerUserId, CancellationToken cancellationToken)
     {
         var record = await _dbContext.WardrobeItems.SingleOrDefaultAsync(

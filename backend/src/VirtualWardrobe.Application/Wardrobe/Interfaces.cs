@@ -7,6 +7,8 @@ public interface IWardrobeItemRepository
 {
     Task AddAsync(WardrobeItem item, CancellationToken cancellationToken);
 
+    Task UpdateAsync(WardrobeItem item, CancellationToken cancellationToken);
+
     Task<WardrobeItem?> GetByIdAsync(WardrobeItemId itemId, UserId ownerUserId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<WardrobeItem>> ListAsync(UserId ownerUserId, ClothingCategory? category, CancellationToken cancellationToken);

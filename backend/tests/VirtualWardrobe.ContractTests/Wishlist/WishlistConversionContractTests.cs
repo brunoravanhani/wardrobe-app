@@ -2,66 +2,80 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualWardrobe.Api.Controllers;
-using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Application.Wardrobe;
+using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Domain.Wardrobe;
 using VirtualWardrobe.Domain.Wishlist;
 
 namespace VirtualWardrobe.ContractTests.Wishlist;
 
-public sealed class WishlistContractTests
+public sealed class WishlistConversionContractTests
 {
     [Fact]
-    public async Task WishlistCrudContractShouldSupportCreateListUpdateDelete()
+    public async Task PurchaseAndConvertContractShouldReturnIdempotentWardrobeItem()
     {
         var ownerUserId = Guid.NewGuid();
-        var mediaId = Guid.NewGuid();
 
-        var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId, mediaId);
+        var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId);
         var wishlistRepository = new InMemoryWishlistItemRepository();
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
-        var command = new CreateWishlistItemCommand(wishlistRepository, mediaRepository);
-        var convertCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository);
+        var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
 
-        var controller = new WishlistItemsController(command, convertCommand);
+        var controller = new WishlistItemsController(wishlistCommand, conversionCommand);
         AttachUser(controller, ownerUserId);
 
         var createAction = await controller.CreateAsync(
             new CreateWishlistItemRequest(
-                ClothingCategory.Coats,
-                "Jaqueta",
-                "Marca",
-                280m,
-                mediaId,
-                ["https://shop.example.com/items/jaqueta"]),
+                ClothingCategory.Shirt,
+                "Camisa casual",
+                "Marca D",
+                150m,
+                null,
+                ["https://shop.example.com/items/camisa-casual"]),
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(createAction.Result);
         var createdItem = Assert.IsType<WishlistItemResponse>(created.Value);
 
-        var updateAction = await controller.UpdateAsync(
+        var purchaseAction = await controller.MarkAsPurchasedAsync(createdItem.Id, CancellationToken.None);
+        var purchased = Assert.IsType<OkObjectResult>(purchaseAction.Result);
+        var purchasedPayload = Assert.IsType<WishlistItemResponse>(purchased.Value);
+        Assert.Equal(WishlistItemStatus.Purchased, purchasedPayload.Status);
+
+        var firstConvert = await controller.ConvertToWardrobeAsync(
             createdItem.Id,
-            new UpdateWishlistItemRequest(
-                ClothingCategory.Coats,
-                "Jaqueta inverno",
-                "Outra",
-                300m,
-                mediaId,
-                ["https://shop.example.com/items/jaqueta-2"]),
+            new ConvertWishlistItemRequest(
+                null,
+                null,
+                "M",
+                null,
+                null,
+                null,
+                null),
             CancellationToken.None);
 
-        var updated = Assert.IsType<OkObjectResult>(updateAction.Result);
-        var updatedPayload = Assert.IsType<WishlistItemResponse>(updated.Value);
-        Assert.Equal("Jaqueta inverno", updatedPayload.Name);
+        var secondConvert = await controller.ConvertToWardrobeAsync(
+            createdItem.Id,
+            new ConvertWishlistItemRequest(
+                null,
+                null,
+                "M",
+                null,
+                null,
+                null,
+                null),
+            CancellationToken.None);
 
-        var listAction = await controller.ListAsync(false, CancellationToken.None);
-        var listed = Assert.IsType<OkObjectResult>(listAction.Result);
-        var listPayload = Assert.IsType<WishlistItemResponse[]>(listed.Value);
-        Assert.Single(listPayload);
+        var firstConvertedResult = Assert.IsType<OkObjectResult>(firstConvert.Result);
+        var firstConvertedPayload = Assert.IsType<WishlistConversionResponse>(firstConvertedResult.Value);
 
-        var deleteAction = await controller.DeleteAsync(createdItem.Id, CancellationToken.None);
-        Assert.IsType<NoContentResult>(deleteAction);
+        var secondConvertedResult = Assert.IsType<OkObjectResult>(secondConvert.Result);
+        var secondConvertedPayload = Assert.IsType<WishlistConversionResponse>(secondConvertedResult.Value);
+
+        Assert.Equal(firstConvertedPayload.WardrobeItem.Id, secondConvertedPayload.WardrobeItem.Id);
+        Assert.Equal(createdItem.Id, firstConvertedPayload.WishlistItemId);
     }
 
     private static void AttachUser(ControllerBase controller, Guid userId)
@@ -156,12 +170,6 @@ public sealed class WishlistContractTests
             return Task.CompletedTask;
         }
 
-        public Task UpdateAsync(WardrobeItem item, CancellationToken cancellationToken)
-        {
-            _items[item.Id.Value] = item;
-            return Task.CompletedTask;
-        }
-
         public Task<WardrobeItem?> GetByIdAsync(WardrobeItemId itemId, UserId ownerUserId, CancellationToken cancellationToken)
         {
             if (_items.TryGetValue(itemId.Value, out var item) && item.OwnerUserId == ownerUserId)
@@ -186,6 +194,12 @@ public sealed class WishlistContractTests
         public Task RemoveAsync(WardrobeItem item, CancellationToken cancellationToken)
         {
             _items.Remove(item.Id.Value);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateAsync(WardrobeItem item, CancellationToken cancellationToken)
+        {
+            _items[item.Id.Value] = item;
             return Task.CompletedTask;
         }
 

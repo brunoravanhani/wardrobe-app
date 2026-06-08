@@ -84,6 +84,7 @@ public static class DependencyInjection
         services.AddScoped<AuthSessionService>();
         services.AddScoped<CreateWardrobeItemCommand>();
         services.AddScoped<CreateWishlistItemCommand>();
+        services.AddScoped<ConvertWishlistItemCommand>();
 
         return services;
     }

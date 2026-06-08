@@ -161,6 +161,32 @@ public sealed class WishlistItem : Entity<WishlistItemId>
         Touch();
     }
 
+    public void MarkAsConverted(Guid wardrobeItemId)
+    {
+        if (wardrobeItemId == Guid.Empty)
+        {
+            throw new ArgumentException("Converted wardrobe item id is required.", nameof(wardrobeItemId));
+        }
+
+        if (ConvertedWardrobeItemId.HasValue)
+        {
+            if (ConvertedWardrobeItemId.Value != wardrobeItemId)
+            {
+                throw new ArgumentException("Wishlist item is already converted to another wardrobe item.", nameof(wardrobeItemId));
+            }
+
+            return;
+        }
+
+        if (Status != WishlistItemStatus.Purchased)
+        {
+            throw new ArgumentException("Wishlist item must be purchased before conversion.", nameof(wardrobeItemId));
+        }
+
+        ConvertedWardrobeItemId = wardrobeItemId;
+        Touch();
+    }
+
     private static void Validate(UserId ownerUserId, string name, decimal targetPrice)
     {
         if (ownerUserId.Value == Guid.Empty)

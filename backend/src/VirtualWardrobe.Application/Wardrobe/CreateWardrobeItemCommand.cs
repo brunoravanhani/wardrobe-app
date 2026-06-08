@@ -111,6 +111,7 @@ public sealed class CreateWardrobeItemCommand
                 input.BodyImageAssetId.HasValue ? new MediaAssetId(input.BodyImageAssetId.Value) : null,
                 input.CareTagImageAssetId.HasValue ? new MediaAssetId(input.CareTagImageAssetId.Value) : null);
 
+            await _wardrobeItemRepository.UpdateAsync(item, cancellationToken);
             await _wardrobeItemRepository.SaveChangesAsync(cancellationToken);
             return Result.Success(item);
         }

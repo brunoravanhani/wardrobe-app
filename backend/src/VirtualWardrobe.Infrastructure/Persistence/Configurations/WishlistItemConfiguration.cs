@@ -78,6 +78,47 @@ public sealed class EfWishlistItemRepository : IWishlistItemRepository
         await _dbContext.WishlistItems.AddAsync(ToRecord(item), cancellationToken);
     }
 
+    public async Task UpdateAsync(WishlistItem item, CancellationToken cancellationToken)
+    {
+        var record = await _dbContext.WishlistItems
+            .Include(x => x.ExternalLinks)
+            .SingleOrDefaultAsync(
+                x => x.Id == item.Id.Value && x.UserId == item.OwnerUserId.Value,
+                cancellationToken);
+
+        if (record is null)
+        {
+            return;
+        }
+
+        record.Category = item.Category.ToString();
+        record.Name = item.Name;
+        record.Brand = item.Brand;
+        record.TargetPrice = item.TargetPrice;
+        record.InspirationImageAssetId = item.InspirationImageAssetId?.Value;
+        record.Status = item.Status.ToString();
+        record.PurchasedAtUtc = item.PurchasedAtUtc;
+        record.ConvertedWardrobeItemId = item.ConvertedWardrobeItemId;
+        record.CreatedAtUtc = item.CreatedAtUtc;
+        record.UpdatedAtUtc = item.UpdatedAtUtc;
+
+        var existingLinks = await _dbContext.WishlistExternalLinks
+            .Where(x => x.WishlistItemId == item.Id.Value)
+            .ToListAsync(cancellationToken);
+
+        _dbContext.WishlistExternalLinks.RemoveRange(existingLinks);
+
+        await _dbContext.WishlistExternalLinks.AddRangeAsync(
+            item.ExternalLinks.Select(link => new WishlistExternalLinkRecord
+            {
+                Id = link.Id.Value,
+                WishlistItemId = item.Id.Value,
+                Url = link.Url,
+                CreatedAtUtc = link.CreatedAtUtc
+            }),
+            cancellationToken);
+    }
+
     public async Task<WishlistItem?> GetByIdAsync(WishlistItemId itemId, UserId ownerUserId, CancellationToken cancellationToken)
     {
         var record = await _dbContext.WishlistItems

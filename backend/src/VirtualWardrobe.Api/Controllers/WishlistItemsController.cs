@@ -4,6 +4,7 @@ using VirtualWardrobe.Api.Infrastructure;
 using VirtualWardrobe.Application.Common;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
+using VirtualWardrobe.Domain.Wardrobe;
 using VirtualWardrobe.Domain.Wishlist;
 
 namespace VirtualWardrobe.Api.Controllers;
@@ -14,10 +15,14 @@ namespace VirtualWardrobe.Api.Controllers;
 public sealed class WishlistItemsController : ControllerBase
 {
     private readonly CreateWishlistItemCommand _createWishlistItemCommand;
+    private readonly ConvertWishlistItemCommand _convertWishlistItemCommand;
 
-    public WishlistItemsController(CreateWishlistItemCommand createWishlistItemCommand)
+    public WishlistItemsController(
+        CreateWishlistItemCommand createWishlistItemCommand,
+        ConvertWishlistItemCommand convertWishlistItemCommand)
     {
         _createWishlistItemCommand = createWishlistItemCommand;
+        _convertWishlistItemCommand = convertWishlistItemCommand;
     }
 
     [HttpGet]
@@ -95,6 +100,50 @@ public sealed class WishlistItemsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{itemId:guid}/mark-purchased")]
+    public async Task<ActionResult<WishlistItemResponse>> MarkAsPurchasedAsync(Guid itemId, CancellationToken cancellationToken)
+    {
+        var ownerUserId = User.GetRequiredUserId();
+        var result = await _convertWishlistItemCommand.MarkAsPurchasedAsync(itemId, ownerUserId, cancellationToken);
+        return ToActionResult(result, StatusCodes.Status200OK);
+    }
+
+    [HttpPost("{itemId:guid}/convert")]
+    public async Task<ActionResult<WishlistConversionResponse>> ConvertToWardrobeAsync(
+        Guid itemId,
+        [FromBody] ConvertWishlistItemRequest request,
+        CancellationToken cancellationToken)
+    {
+        var ownerUserId = User.GetRequiredUserId();
+
+        var result = await _convertWishlistItemCommand.ConvertToWardrobeAsync(
+            new ConvertWishlistItemInput(
+                itemId,
+                ownerUserId,
+                request.Name,
+                request.Category,
+                request.Size,
+                request.Brand,
+                request.Price,
+                request.BodyImageAssetId,
+                request.CareTagImageAssetId),
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error.Code switch
+            {
+                "forbidden" => StatusCodes.Status403Forbidden,
+                "not_found" => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest
+            };
+
+            return Problem(title: "Wishlist request failed", detail: result.Error.Message, statusCode: statusCode);
+        }
+
+        return Ok(new WishlistConversionResponse(itemId, MapWardrobe(result.Value)));
+    }
+
     private ActionResult<WishlistItemResponse> ToActionResult(Result<WishlistItem> result, int successStatusCode)
     {
         if (result.IsFailure)
@@ -137,6 +186,19 @@ public sealed class WishlistItemsController : ControllerBase
             item.PurchasedAtUtc,
             item.ConvertedWardrobeItemId);
     }
+
+    private static WardrobeItemResponse MapWardrobe(WardrobeItem item)
+    {
+        return new WardrobeItemResponse(
+            item.Id.Value,
+            item.Category,
+            item.Name,
+            item.Brand,
+            item.Size,
+            item.Price,
+            item.BodyImageAssetId?.Value,
+            item.CareTagImageAssetId?.Value);
+    }
 }
 
 public sealed record CreateWishlistItemRequest(
@@ -155,6 +217,15 @@ public sealed record UpdateWishlistItemRequest(
     Guid? InspirationImageAssetId,
     string[]? Links);
 
+public sealed record ConvertWishlistItemRequest(
+    string? Name,
+    ClothingCategory? Category,
+    string Size,
+    string? Brand,
+    decimal? Price,
+    Guid? BodyImageAssetId,
+    Guid? CareTagImageAssetId);
+
 public sealed record WishlistItemResponse(
     Guid Id,
     ClothingCategory Category,
@@ -166,3 +237,5 @@ public sealed record WishlistItemResponse(
     WishlistItemStatus Status,
     DateTime? PurchasedAtUtc,
     Guid? ConvertedWardrobeItemId);
+
+public sealed record WishlistConversionResponse(Guid WishlistItemId, WardrobeItemResponse WardrobeItem);

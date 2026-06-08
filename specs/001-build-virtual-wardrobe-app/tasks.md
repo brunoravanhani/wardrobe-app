@@ -151,15 +151,15 @@
 
 ### Tests for User Story 3 Backend (REQUIRED) ⚠️
 
-- [ ] T043 [P] [US3-BE] Add unit tests for purchase, conversion, and idempotency rules in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistConversionTests.cs
-- [ ] T044 [P] [US3-BE] Add integration tests for purchase history retention and wishlist-to-wardrobe conversion in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistConversionTests.cs
-- [ ] T045 [P] [US3-BE] Add contract tests for purchase and conversion endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistConversionContractTests.cs
+- [X] T043 [P] [US3-BE] Add unit tests for purchase, conversion, and idempotency rules in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistConversionTests.cs
+- [X] T044 [P] [US3-BE] Add integration tests for purchase history retention and wishlist-to-wardrobe conversion in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistConversionTests.cs
+- [X] T045 [P] [US3-BE] Add contract tests for purchase and conversion endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistConversionContractTests.cs
 
 ### Implementation for User Story 3 Backend
 
-- [ ] T047 [US3-BE] Implement purchase and conversion commands with missing-field validation and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/ConvertWishlistItemCommand.cs
-- [ ] T048 [US3-BE] Extend wishlist endpoints for purchase, history retention, and conversion in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
-- [ ] T049 [US3-BE] Extend wardrobe persistence to link converted wishlist items idempotently in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WardrobeItemConfiguration.cs
+- [X] T047 [US3-BE] Implement purchase and conversion commands with missing-field validation and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/ConvertWishlistItemCommand.cs
+- [X] T048 [US3-BE] Extend wishlist endpoints for purchase, history retention, and conversion in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
+- [X] T049 [US3-BE] Extend wardrobe persistence to link converted wishlist items idempotently in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WardrobeItemConfiguration.cs
 
 **Checkpoint**: US3 backend is independently functional and testable.
 

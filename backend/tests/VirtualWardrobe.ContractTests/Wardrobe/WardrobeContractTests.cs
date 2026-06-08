@@ -170,6 +170,12 @@ public sealed class WardrobeContractTests
             return Task.CompletedTask;
         }
 
+        public Task UpdateAsync(WardrobeItem item, CancellationToken cancellationToken)
+        {
+            _items[item.Id.Value] = item;
+            return Task.CompletedTask;
+        }
+
         public Task<WardrobeItem?> GetByIdAsync(WardrobeItemId itemId, UserId ownerUserId, CancellationToken cancellationToken)
         {
             if (_items.TryGetValue(itemId.Value, out var item) && item.OwnerUserId == ownerUserId)

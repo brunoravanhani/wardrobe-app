@@ -100,6 +100,7 @@ public sealed class CreateWishlistItemCommand
                 input.InspirationImageAssetId.HasValue ? new MediaAssetId(input.InspirationImageAssetId.Value) : null,
                 input.Links);
 
+            await _wishlistItemRepository.UpdateAsync(item, cancellationToken);
             await _wishlistItemRepository.SaveChangesAsync(cancellationToken);
             return Result.Success(item);
         }
