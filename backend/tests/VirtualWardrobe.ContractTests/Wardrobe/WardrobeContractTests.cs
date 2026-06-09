@@ -30,7 +30,7 @@ public sealed class WardrobeContractTests
             new FakeUserIdentityStore(),
             jwtOptions);
 
-        var controller = new AuthController(authService);
+        var controller = new AuthController(authService, Microsoft.Extensions.Logging.Abstractions.NullLogger<VirtualWardrobe.Api.Controllers.AuthController>.Instance);
 
         var action = await controller.ExchangeAsync(new ExchangeGoogleTokenRequest("valid-token"), CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(action.Result);
@@ -96,7 +96,7 @@ public sealed class WardrobeContractTests
     {
         var ownerUserId = Guid.NewGuid();
         var mediaService = new FakePrivateMediaUrlService();
-        var controller = new MediaController(mediaService);
+        var controller = new MediaController(mediaService, Microsoft.Extensions.Logging.Abstractions.NullLogger<VirtualWardrobe.Api.Controllers.MediaController>.Instance);
         AttachUser(controller, ownerUserId);
 
         var uploadAction = await controller.CreateUploadUrlAsync(

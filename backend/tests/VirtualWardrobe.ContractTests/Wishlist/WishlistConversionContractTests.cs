@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using VirtualWardrobe.Api.Controllers;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Application.Wishlist;
@@ -23,7 +24,7 @@ public sealed class WishlistConversionContractTests
         var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository);
         var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
 
-        var controller = new WishlistItemsController(wishlistCommand, conversionCommand);
+        var controller = new WishlistItemsController(wishlistCommand, conversionCommand, NullLogger<WishlistItemsController>.Instance);
         AttachUser(controller, ownerUserId);
 
         var createAction = await controller.CreateAsync(

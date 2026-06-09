@@ -15,7 +15,7 @@ public sealed class WishlistMediaValidationContractTests
         string contentType,
         long fileSizeBytes)
     {
-        var controller = new MediaController(new ValidatingPrivateMediaUrlService());
+        var controller = new MediaController(new ValidatingPrivateMediaUrlService(), Microsoft.Extensions.Logging.Abstractions.NullLogger<VirtualWardrobe.Api.Controllers.MediaController>.Instance);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext

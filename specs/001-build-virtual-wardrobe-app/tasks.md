@@ -190,11 +190,11 @@
 
 **Purpose**: Finalize quality, accessibility, performance, security, and documentation across all stories.
 
-- [ ] T054 [P] Add structured logging and metrics for auth, S3 presign flows, and conversion outcomes in backend/src/VirtualWardrobe.Api/Observability/TelemetryConfig.cs
-- [ ] T055 [P] Add accessibility regression coverage for wardrobe and wishlist flows in frontend/tests/e2e/accessibility.spec.ts
-- [ ] T056 [P] Add primary-journey performance verification for p95 budgets in frontend/tests/e2e/performance.spec.ts
-- [ ] T057 [P] Add CI secret and configuration audit checks in .github/workflows/ci.yml
-- [ ] T058 Run quickstart validation and capture final execution notes in specs/001-build-virtual-wardrobe-app/quickstart.md
+- [X] T054 [P] Add structured logging and metrics for auth, S3 presign flows, and conversion outcomes in backend/src/VirtualWardrobe.Api/Observability/TelemetryConfig.cs
+- [X] T055 [P] Add accessibility regression coverage for wardrobe and wishlist flows in frontend/tests/e2e/accessibility.spec.ts
+- [X] T056 [P] Add primary-journey performance verification for p95 budgets in frontend/tests/e2e/performance.spec.ts
+- [X] T057 [P] Add CI secret and configuration audit checks in .github/workflows/ci.yml
+- [X] T058 Run quickstart validation and capture final execution notes in specs/001-build-virtual-wardrobe-app/quickstart.md
 
 ---
 

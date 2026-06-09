@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VirtualWardrobe.Api.Infrastructure;
+using VirtualWardrobe.Api.Observability;
 using VirtualWardrobe.Application.Common;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
@@ -12,17 +13,20 @@ namespace VirtualWardrobe.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("v1/wishlist-items")]
-public sealed class WishlistItemsController : ControllerBase
+public sealed partial class WishlistItemsController : ControllerBase
 {
     private readonly CreateWishlistItemCommand _createWishlistItemCommand;
     private readonly ConvertWishlistItemCommand _convertWishlistItemCommand;
+    private readonly ILogger<WishlistItemsController> _logger;
 
     public WishlistItemsController(
         CreateWishlistItemCommand createWishlistItemCommand,
-        ConvertWishlistItemCommand convertWishlistItemCommand)
+        ConvertWishlistItemCommand convertWishlistItemCommand,
+        ILogger<WishlistItemsController> logger)
     {
         _createWishlistItemCommand = createWishlistItemCommand;
         _convertWishlistItemCommand = convertWishlistItemCommand;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -114,7 +118,9 @@ public sealed class WishlistItemsController : ControllerBase
         [FromBody] ConvertWishlistItemRequest request,
         CancellationToken cancellationToken)
     {
+        TelemetryConfig.WishlistConversionTotal.Add(1);
         var ownerUserId = User.GetRequiredUserId();
+        Log.ConversionInitiated(_logger, itemId, ownerUserId);
 
         var result = await _convertWishlistItemCommand.ConvertToWardrobeAsync(
             new ConvertWishlistItemInput(
@@ -131,6 +137,9 @@ public sealed class WishlistItemsController : ControllerBase
 
         if (result.IsFailure)
         {
+            TelemetryConfig.WishlistConversionFailures.Add(1);
+            Log.ConversionFailed(_logger, itemId, result.Error.Message);
+
             var statusCode = result.Error.Code switch
             {
                 "forbidden" => StatusCodes.Status403Forbidden,
@@ -140,6 +149,9 @@ public sealed class WishlistItemsController : ControllerBase
 
             return Problem(title: "Wishlist request failed", detail: result.Error.Message, statusCode: statusCode);
         }
+
+        TelemetryConfig.WishlistConversionSuccesses.Add(1);
+        Log.ConversionSucceeded(_logger, itemId, result.Value.Id.Value);
 
         return Ok(new WishlistConversionResponse(itemId, MapWardrobe(result.Value)));
     }
@@ -198,6 +210,18 @@ public sealed class WishlistItemsController : ControllerBase
             item.Price,
             item.BodyImageAssetId?.Value,
             item.CareTagImageAssetId?.Value);
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information, Message = "Wishlist conversion initiated for item {WishlistItemId} by user {UserId}")]
+        internal static partial void ConversionInitiated(ILogger logger, Guid wishlistItemId, Guid userId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Wishlist conversion failed for item {WishlistItemId}: {Error}")]
+        internal static partial void ConversionFailed(ILogger logger, Guid wishlistItemId, string error);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Wishlist item {WishlistItemId} converted to wardrobe item {WardrobeItemId}")]
+        internal static partial void ConversionSucceeded(ILogger logger, Guid wishlistItemId, Guid wardrobeItemId);
     }
 }
 

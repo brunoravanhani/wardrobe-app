@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using VirtualWardrobe.Api.Observability;
 using VirtualWardrobe.Application.Auth;
 using VirtualWardrobe.Infrastructure;
 
@@ -14,6 +15,7 @@ public static class ApiHostingExtensions
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole();
 
+        builder.Services.AddTelemetry();
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddControllers();
         builder.Services.AddProblemDetails();

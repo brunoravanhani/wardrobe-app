@@ -116,3 +116,47 @@ pnpm test:e2e
 - Media URLs are owner-only, presigned, short-lived, and backed by a private S3 bucket.
 - All UI copy is in pt-BR.
 - p95 performance targets from spec are met in test runs.
+
+## 6. Observability
+
+Structured JSON logs are written to stdout (configured in `ApiHostingExtensions`). Key log events:
+
+| Event | Logger | Fields |
+|-------|--------|--------|
+| Google token exchange | `AuthController` | `UserId` on success |
+| Auth exchange failure | `AuthController` | exception message |
+| Presigned upload URL requested | `MediaController` | `Purpose` |
+| Presigned upload URL issued | `MediaController` | `MediaAssetId` |
+| Presigned view URL requested | `MediaController` | `MediaAssetId`, `UserId` |
+| Presigned URL failure | `MediaController` | error message |
+| Conversion initiated | `WishlistItemsController` | `WishlistItemId`, `UserId` |
+| Conversion succeeded | `WishlistItemsController` | `WishlistItemId`, `WardrobeItemId` |
+| Conversion failed | `WishlistItemsController` | `WishlistItemId`, error message |
+
+Metrics (via `System.Diagnostics.Metrics`, meter name `VirtualWardrobe.Api`):
+
+- `auth.exchange.total` / `auth.exchange.failures`
+- `media.upload_url.total` / `media.view_url.total` / `media.presign.failures`
+- `wishlist.conversion.total` / `wishlist.conversion.successes` / `wishlist.conversion.failures`
+
+## 7. CI Pipeline
+
+The `.github/workflows/ci.yml` pipeline runs on every push and pull request to `main`:
+
+1. **Secret & Config Audit** — verifies no `.env` files are tracked, no hardcoded secrets in source, and `.env.example` files use placeholders only.
+2. **Backend Tests** — restores, builds, and runs unit, integration, and contract test suites against a live PostgreSQL service container.
+3. **Frontend Tests** — lints, type-checks, runs unit tests, builds, and runs Playwright e2e tests (wardrobe, wishlist, conversion, accessibility, performance).
+
+Required GitHub secrets:
+- `JWT_SIGNING_KEY_TEST` — a test-only signing key used only in the CI environment.
+
+## 8. Final Delivery Notes (Phase 9 — 2026-06-08)
+
+All phases (1–9) are complete. Delivered capabilities:
+
+- **US1**: Wardrobe item CRUD with category filtering, private image upload/view via S3 presigned URLs.
+- **US2**: Wishlist management with target price, external links, inspiration image, purchased history, and unsaved draft protection.
+- **US3**: Purchased-to-wardrobe conversion with idempotency and missing-field dialog.
+- **Polish**: Structured logging and metrics, accessibility e2e regression suite, p95 performance verification, CI pipeline with secret audit.
+
+Constitution compliance: all gates (code quality, testing, UX consistency, performance, secret management, observability) are satisfied across all delivered phases.
