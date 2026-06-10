@@ -52,3 +52,15 @@ public readonly record struct WardrobeItemId(Guid Value)
     public static WardrobeItemId New() => new(Guid.NewGuid());
     public override string ToString() => Value.ToString();
 }
+
+public readonly record struct WishlistItemId(Guid Value)
+{
+    public static WishlistItemId New() => new(Guid.NewGuid());
+    public override string ToString() => Value.ToString();
+}
+
+public readonly record struct WishlistExternalLinkId(Guid Value)
+{
+    public static WishlistExternalLinkId New() => new(Guid.NewGuid());
+    public override string ToString() => Value.ToString();
+}

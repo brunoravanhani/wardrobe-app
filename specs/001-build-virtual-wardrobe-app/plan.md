@@ -14,9 +14,9 @@ Implementation sequencing is backend-first then frontend for each user story fro
 
 **Language/Version**: TypeScript (frontend, React 18+), C# 12 on .NET 8 (backend), SQL (PostgreSQL 15+)
 
-**Primary Dependencies**: React SPA stack (React, React Router, Tailwind CSS, query/state library), ASP.NET Core Web API, Entity Framework Core, Npgsql provider, Google OAuth/OIDC integration, AWS S3 SDK for .NET
+**Primary Dependencies**: React SPA stack (React, React Router, Tailwind CSS, query/state library), ASP.NET Core Web API, Entity Framework Core, EF Core Migrations tooling, Npgsql provider, Google OAuth/OIDC integration, AWS S3 SDK for .NET
 
-**Storage**: PostgreSQL for relational domain data; private AWS S3 bucket for images (wardrobe body image, care-tag image, wishlist inspiration image) with backend-issued presigned upload/view URLs after ownership checks
+**Storage**: PostgreSQL for relational domain data with schema versioning through EF Core migrations and tracked history (`__EFMigrationsHistory`); private AWS S3 bucket for images (wardrobe body image, care-tag image, wishlist inspiration image) with backend-issued presigned upload/view URLs after ownership checks
 
 **Testing**: Frontend unit/component tests + end-to-end browser tests; backend unit + integration tests (database and auth boundaries); API contract tests derived from OpenAPI
 
@@ -37,6 +37,8 @@ Implementation sequencing is backend-first then frontend for each user story fro
 - Rich domain entities are required: aggregates encapsulate invariants and behavior, not only data bags.
 - Program.cs must remain a thin composition root that only orchestrates extension methods/modules.
 - From US1 onward, each user story is delivered in two phases: backend first, frontend second.
+- Database schema evolution is migration-first: every relational schema change must be introduced via EF Core migration files committed to source control, using timestamped migration identifiers, and applied in order during deployment.
+- Roll-forward is the default production remediation path for failed schema releases; down migrations are supported for local/dev validation and controlled rollback procedures.
 
 ## Constitution Check
 
@@ -47,6 +49,7 @@ Implementation sequencing is backend-first then frontend for each user story fro
 - UX Consistency Gate: PASS. Maintain consistent pt-BR terminology across wardrobe/wishlist; define keyboard/accessibility checks for forms, upload controls, and state transitions.
 - Reuse Gate: PASS. Reuse shared form, card, and validation primitives before introducing new components; reuse backend cross-cutting abstractions (result/error handling, validation pipeline).
 - Architecture Gate: PASS. Repository and Result patterns are mandatory, rich domain entities are required, and Program.cs remains thin by convention and review checks.
+- Database Versioning Gate: PASS. Schema changes are tracked with versioned migrations, deterministic ordering, and deployment-time migration execution checks.
 - Performance Gate: PASS. Enforce p95 budgets from spec with synthetic journey timing in CI and targeted profile captures for list and conversion flows.
 - Secret Management Gate: PASS. Google credentials, DB connection, AWS access settings, and bucket configuration will be environment-backed only; no hardcoded sensitive values.
 - Observability Gate: PASS. Define structured logs for auth, S3 upload/view URL issuance, and conversion flows plus metrics for latency/error rate and conversion success.
@@ -121,6 +124,7 @@ Research decisions are recorded in [research.md](./research.md) and resolve all 
 - UX Consistency: PASS. pt-BR UX and accessibility checks included in quickstart validation and contract-level error semantics.
 - Performance: PASS. Measurable p95 thresholds retained; validation approach defined in quickstart.
 - Secret Management: PASS. Environment-backed secret contract defined for backend and frontend runtime config, including AWS bucket and credentials.
+- Database Versioning: PASS. Migration naming, ordering, and release execution policy are explicitly defined with rollback guidance.
 - Observability and Safe Evolution: PASS. Auth, S3 media access, and conversion telemetry planned with non-breaking contract versioning approach.
 
 ## Complexity Tracking

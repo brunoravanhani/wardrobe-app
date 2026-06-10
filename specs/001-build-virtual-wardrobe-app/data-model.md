@@ -86,6 +86,17 @@
 - Reject files > 10 MB.
 - Asset owner must match item owner during association.
 
+## Entity: SchemaVersionHistory
+
+- Purpose: Tracks applied database schema migrations and ensures deterministic schema versioning.
+- Fields:
+- `migrationId` (string, PK)
+- `productVersion` (string, required)
+- Source: EF Core managed `__EFMigrationsHistory` table.
+- Validation rules:
+- Migration identifiers must be unique and ordered by creation timestamp convention.
+- Production environments apply migrations in order; skipped versions are not allowed.
+
 ## Enum: ClothingCategory
 
 - Values:
@@ -109,3 +120,9 @@
 
 - Conversion creates one `WardrobeItem` and links `WishlistItem.convertedWardrobeItemId`.
 - Repeat conversion request for the same wishlist item must be rejected idempotently.
+
+## Schema Versioning Rules
+
+- Every relational model change requires a corresponding EF migration file in source control.
+- Migration filenames use timestamp-first naming for deterministic ordering.
+- Release pipelines must verify pending migrations and apply them before serving traffic.

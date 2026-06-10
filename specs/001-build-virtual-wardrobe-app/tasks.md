@@ -80,14 +80,14 @@
 
 ### Tests for User Story 1 Frontend (REQUIRED) ⚠️
 
-- [ ] T019 [P] [US1-FE] Add end-to-end coverage for wardrobe creation, edit, and filtering in frontend/tests/e2e/wardrobe.spec.ts
+- [X] T019 [P] [US1-FE] Add end-to-end coverage for wardrobe creation, edit, and filtering in frontend/tests/e2e/wardrobe.spec.ts
 
 ### Implementation for User Story 1 Frontend
 
-- [ ] T026 [P] [US1-FE] Implement the wardrobe API client and DTO mapping in frontend/src/services/wardrobeApi.ts
-- [ ] T027 [US1-FE] Implement the wardrobe page with category tabs and item list state in frontend/src/features/wardrobe/WardrobePage.tsx
-- [ ] T028 [US1-FE] Implement the wardrobe item form with image upload and pt-BR validation messages in frontend/src/features/wardrobe/components/WardrobeItemForm.tsx
-- [ ] T029 [US1-FE] Document wardrobe-specific component reuse decisions in frontend/src/features/wardrobe/README.md
+- [X] T026 [P] [US1-FE] Implement the wardrobe API client and DTO mapping in frontend/src/services/wardrobeApi.ts
+- [X] T027 [US1-FE] Implement the wardrobe page with category tabs and item list state in frontend/src/features/wardrobe/WardrobePage.tsx
+- [X] T028 [US1-FE] Implement the wardrobe item form with image upload and pt-BR validation messages in frontend/src/features/wardrobe/components/WardrobeItemForm.tsx
+- [X] T029 [US1-FE] Document wardrobe-specific component reuse decisions in frontend/src/features/wardrobe/README.md
 
 **Checkpoint**: User Story 1 is independently functional and represents the MVP.
 
@@ -101,19 +101,20 @@
 
 ### Tests for User Story 2 Backend (REQUIRED) ⚠️
 
-- [ ] T030 [P] [US2-BE] Add unit tests for wishlist target-price and external-link validation in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistValidationTests.cs
-- [ ] T031 [P] [US2-BE] Add integration tests for wishlist CRUD, history filtering defaults, and duplicate-link rejection in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistItemTests.cs
-- [ ] T032 [P] [US2-BE] Add contract tests for wishlist CRUD endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistContractTests.cs
-- [ ] T065 [P] [US2-BE] Add negative tests for invalid image format and files above 10 MB in wishlist inspiration endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistMediaValidationContractTests.cs
+- [X] T030 [P] [US2-BE] Add unit tests for wishlist target-price and external-link validation in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistValidationTests.cs
+- [X] T031 [P] [US2-BE] Add integration tests for wishlist CRUD, history filtering defaults, and duplicate-link rejection in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistItemTests.cs
+- [X] T032 [P] [US2-BE] Add contract tests for wishlist CRUD endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistContractTests.cs
+- [X] T065 [P] [US2-BE] Add negative tests for invalid image format and files above 10 MB in wishlist inspiration endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistMediaValidationContractTests.cs
 
 ### Implementation for User Story 2 Backend
 
-- [ ] T034 [P] [US2-BE] Create the wishlist item aggregate with rich behaviors and status defaults in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistItem.cs
-- [ ] T035 [P] [US2-BE] Create the wishlist external link entity with duplicate protection rules in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistExternalLink.cs
-- [ ] T066 [US2-BE] Define repository interfaces for wishlist aggregate and queries in backend/src/VirtualWardrobe.Application/Wishlist/Interfaces.cs
-- [ ] T036 [US2-BE] Implement wishlist create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/CreateWishlistItemCommand.cs
-- [ ] T037 [US2-BE] Map wishlist persistence, link ownership, and default active filtering including repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WishlistItemConfiguration.cs
-- [ ] T038 [US2-BE] Implement wishlist CRUD and history filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
+- [X] T034 [P] [US2-BE] Create the wishlist item aggregate with rich behaviors and status defaults in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistItem.cs
+- [X] T035 [P] [US2-BE] Create the wishlist external link entity with duplicate protection rules in backend/src/VirtualWardrobe.Domain/Wishlist/WishlistExternalLink.cs
+- [X] T066 [US2-BE] Define repository interfaces for wishlist aggregate and queries in backend/src/VirtualWardrobe.Application/Wishlist/Interfaces.cs
+- [X] T036 [US2-BE] Implement wishlist create and update commands with validators and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/CreateWishlistItemCommand.cs
+- [X] T037 [US2-BE] Map wishlist persistence, link ownership, and default active filtering including repository implementations in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WishlistItemConfiguration.cs
+- [X] T069 [US2-BE] Add EF Core migration for wishlist tables, relationships, and indexes in backend/src/VirtualWardrobe.Infrastructure/Persistence/Migrations/20260603_AddWishlistSchema.cs
+- [X] T038 [US2-BE] Implement wishlist CRUD and history filter endpoints using repository-backed handlers in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
 
 **Checkpoint**: US2 backend is independently functional and stable.
 
@@ -127,16 +128,16 @@
 
 ### Tests for User Story 2 Frontend (REQUIRED) ⚠️
 
-- [ ] T033 [P] [US2-FE] Add end-to-end coverage for wishlist create and edit flows in frontend/tests/e2e/wishlist.spec.ts
-- [ ] T067 [P] [US2-FE] Add end-to-end coverage for unsaved form draft protection and recovery in frontend/tests/e2e/wishlist-unsaved-draft.spec.ts
+- [X] T033 [P] [US2-FE] Add end-to-end coverage for wishlist create and edit flows in frontend/tests/e2e/wishlist.spec.ts
+- [X] T067 [P] [US2-FE] Add end-to-end coverage for unsaved form draft protection and recovery in frontend/tests/e2e/wishlist-unsaved-draft.spec.ts
 
 ### Implementation for User Story 2 Frontend
 
-- [ ] T039 [P] [US2-FE] Implement the wishlist API client and DTO mapping in frontend/src/services/wishlistApi.ts
-- [ ] T040 [US2-FE] Implement the wishlist page with active and history views in frontend/src/features/wishlist/WishlistPage.tsx
-- [ ] T041 [US2-FE] Implement the wishlist form with target price, links, and inspiration upload in frontend/src/features/wishlist/components/WishlistItemForm.tsx
-- [ ] T068 [US2-FE] Implement unsaved draft persistence and recovery for wardrobe and wishlist forms in frontend/src/app/providers/DraftStateProvider.tsx
-- [ ] T042 [US2-FE] Document wishlist-specific component reuse decisions in frontend/src/features/wishlist/README.md
+- [X] T039 [P] [US2-FE] Implement the wishlist API client and DTO mapping in frontend/src/services/wishlistApi.ts
+- [X] T040 [US2-FE] Implement the wishlist page with active and history views in frontend/src/features/wishlist/WishlistPage.tsx
+- [X] T041 [US2-FE] Implement the wishlist form with target price, links, and inspiration upload in frontend/src/features/wishlist/components/WishlistItemForm.tsx
+- [X] T068 [US2-FE] Implement unsaved draft persistence and recovery for wardrobe and wishlist forms in frontend/src/app/providers/DraftStateProvider.tsx
+- [X] T042 [US2-FE] Document wishlist-specific component reuse decisions in frontend/src/features/wishlist/README.md
 
 **Checkpoint**: User Stories 1 and 2 are independently functional and can be demoed separately.
 
@@ -150,15 +151,15 @@
 
 ### Tests for User Story 3 Backend (REQUIRED) ⚠️
 
-- [ ] T043 [P] [US3-BE] Add unit tests for purchase, conversion, and idempotency rules in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistConversionTests.cs
-- [ ] T044 [P] [US3-BE] Add integration tests for purchase history retention and wishlist-to-wardrobe conversion in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistConversionTests.cs
-- [ ] T045 [P] [US3-BE] Add contract tests for purchase and conversion endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistConversionContractTests.cs
+- [X] T043 [P] [US3-BE] Add unit tests for purchase, conversion, and idempotency rules in backend/tests/VirtualWardrobe.UnitTests/Wishlist/WishlistConversionTests.cs
+- [X] T044 [P] [US3-BE] Add integration tests for purchase history retention and wishlist-to-wardrobe conversion in backend/tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistConversionTests.cs
+- [X] T045 [P] [US3-BE] Add contract tests for purchase and conversion endpoints in backend/tests/VirtualWardrobe.ContractTests/Wishlist/WishlistConversionContractTests.cs
 
 ### Implementation for User Story 3 Backend
 
-- [ ] T047 [US3-BE] Implement purchase and conversion commands with missing-field validation and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/ConvertWishlistItemCommand.cs
-- [ ] T048 [US3-BE] Extend wishlist endpoints for purchase, history retention, and conversion in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
-- [ ] T049 [US3-BE] Extend wardrobe persistence to link converted wishlist items idempotently in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WardrobeItemConfiguration.cs
+- [X] T047 [US3-BE] Implement purchase and conversion commands with missing-field validation and Result returns in backend/src/VirtualWardrobe.Application/Wishlist/ConvertWishlistItemCommand.cs
+- [X] T048 [US3-BE] Extend wishlist endpoints for purchase, history retention, and conversion in backend/src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs
+- [X] T049 [US3-BE] Extend wardrobe persistence to link converted wishlist items idempotently in backend/src/VirtualWardrobe.Infrastructure/Persistence/Configurations/WardrobeItemConfiguration.cs
 
 **Checkpoint**: US3 backend is independently functional and testable.
 
@@ -172,14 +173,14 @@
 
 ### Tests for User Story 3 Frontend (REQUIRED) ⚠️
 
-- [ ] T046 [P] [US3-FE] Add end-to-end coverage for purchase and convert flows in frontend/tests/e2e/wishlist-conversion.spec.ts
+- [X] T046 [P] [US3-FE] Add end-to-end coverage for purchase and convert flows in frontend/tests/e2e/wishlist-conversion.spec.ts
 
 ### Implementation for User Story 3 Frontend
 
-- [ ] T050 [P] [US3-FE] Extend the wishlist API client for purchase and conversion actions in frontend/src/services/wishlistApi.ts
-- [ ] T051 [US3-FE] Implement purchased-history actions and conversion entry points in frontend/src/features/wishlist/WishlistPage.tsx
-- [ ] T052 [US3-FE] Implement the missing-field conversion dialog in frontend/src/features/wishlist/components/ConvertWishlistItemDialog.tsx
-- [ ] T053 [US3-FE] Document conversion-flow reuse decisions in frontend/src/features/wishlist/README.md
+- [X] T050 [P] [US3-FE] Extend the wishlist API client for purchase and conversion actions in frontend/src/services/wishlistApi.ts
+- [X] T051 [US3-FE] Implement purchased-history actions and conversion entry points in frontend/src/features/wishlist/WishlistPage.tsx
+- [X] T052 [US3-FE] Implement the missing-field conversion dialog in frontend/src/features/wishlist/components/ConvertWishlistItemDialog.tsx
+- [X] T053 [US3-FE] Document conversion-flow reuse decisions in frontend/src/features/wishlist/README.md
 
 **Checkpoint**: All user stories are functional, and conversion behavior is independently testable.
 
@@ -189,11 +190,11 @@
 
 **Purpose**: Finalize quality, accessibility, performance, security, and documentation across all stories.
 
-- [ ] T054 [P] Add structured logging and metrics for auth, S3 presign flows, and conversion outcomes in backend/src/VirtualWardrobe.Api/Observability/TelemetryConfig.cs
-- [ ] T055 [P] Add accessibility regression coverage for wardrobe and wishlist flows in frontend/tests/e2e/accessibility.spec.ts
-- [ ] T056 [P] Add primary-journey performance verification for p95 budgets in frontend/tests/e2e/performance.spec.ts
-- [ ] T057 [P] Add CI secret and configuration audit checks in .github/workflows/ci.yml
-- [ ] T058 Run quickstart validation and capture final execution notes in specs/001-build-virtual-wardrobe-app/quickstart.md
+- [X] T054 [P] Add structured logging and metrics for auth, S3 presign flows, and conversion outcomes in backend/src/VirtualWardrobe.Api/Observability/TelemetryConfig.cs
+- [X] T055 [P] Add accessibility regression coverage for wardrobe and wishlist flows in frontend/tests/e2e/accessibility.spec.ts
+- [X] T056 [P] Add primary-journey performance verification for p95 budgets in frontend/tests/e2e/performance.spec.ts
+- [X] T057 [P] Add CI secret and configuration audit checks in .github/workflows/ci.yml
+- [X] T058 Run quickstart validation and capture final execution notes in specs/001-build-virtual-wardrobe-app/quickstart.md
 
 ---
 

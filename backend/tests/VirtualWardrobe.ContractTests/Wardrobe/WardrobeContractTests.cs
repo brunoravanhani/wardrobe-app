@@ -30,7 +30,7 @@ public sealed class WardrobeContractTests
             new FakeUserIdentityStore(),
             jwtOptions);
 
-        var controller = new AuthController(authService);
+        var controller = new AuthController(authService, Microsoft.Extensions.Logging.Abstractions.NullLogger<VirtualWardrobe.Api.Controllers.AuthController>.Instance);
 
         var action = await controller.ExchangeAsync(new ExchangeGoogleTokenRequest("valid-token"), CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(action.Result);
@@ -55,7 +55,7 @@ public sealed class WardrobeContractTests
 
         var createAction = await controller.CreateAsync(
             new CreateWardrobeItemRequest(
-                ClothingCategory.TShirt,
+                "TShirt",
                 "Camiseta",
                 "M",
                 "Marca",
@@ -70,7 +70,7 @@ public sealed class WardrobeContractTests
         var updateAction = await controller.UpdateAsync(
             createdItem.Id,
             new UpdateWardrobeItemRequest(
-                ClothingCategory.Shirt,
+                "Shirt",
                 "Camisa",
                 "G",
                 "Outra",
@@ -96,7 +96,7 @@ public sealed class WardrobeContractTests
     {
         var ownerUserId = Guid.NewGuid();
         var mediaService = new FakePrivateMediaUrlService();
-        var controller = new MediaController(mediaService);
+        var controller = new MediaController(mediaService, Microsoft.Extensions.Logging.Abstractions.NullLogger<VirtualWardrobe.Api.Controllers.MediaController>.Instance);
         AttachUser(controller, ownerUserId);
 
         var uploadAction = await controller.CreateUploadUrlAsync(
@@ -165,6 +165,12 @@ public sealed class WardrobeContractTests
         private readonly Dictionary<Guid, WardrobeItem> _items = [];
 
         public Task AddAsync(WardrobeItem item, CancellationToken cancellationToken)
+        {
+            _items[item.Id.Value] = item;
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateAsync(WardrobeItem item, CancellationToken cancellationToken)
         {
             _items[item.Id.Value] = item;
             return Task.CompletedTask;

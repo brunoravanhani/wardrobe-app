@@ -47,3 +47,9 @@
 - Decision: Implement unit + integration + e2e + contract tests, requiring failing test proof before implementation and passing after changes.
 - Rationale: Directly satisfies constitution and specification testing gates across logic, persistence, and user journeys.
 - Alternatives considered: Unit-only approach (insufficient boundary confidence); manual QA only (not acceptable by constitution).
+
+## Decision 8: Database schema versioning and migration governance
+
+- Decision: Use EF Core migrations as the authoritative schema versioning mechanism, with timestamp-prefixed migration names, committed migration files, generated SQL scripts for release review, and ordered application at deploy time.
+- Rationale: Keeps schema evolution auditable, reproducible across environments, and aligned with safe evolution principles while reducing drift risk between code and database.
+- Alternatives considered: Manual SQL-only schema changes (higher drift risk and weaker traceability); auto-migrate at runtime without reviewed scripts (faster but higher production risk).
