@@ -1,8 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell.exe -File .specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet run *)",
+      "Bash(dotnet ef *)",
+      "Bash(Get-ChildItem *)"
     ]
   }
 }
