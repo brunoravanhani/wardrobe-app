@@ -58,10 +58,11 @@ public sealed class WishlistItemTests
                 "Marca A",
                 350m,
                 ownerMediaId,
-                ["https://shop.example.com/items/1"]),
+                [new WishlistLinkInput("https://shop.example.com/items/1", "Ver na Loja")]),
             CancellationToken.None);
 
         Assert.True(createResult.IsSuccess);
+        Assert.Equal("Ver na Loja", createResult.Value.ExternalLinks[0].Label);
 
         var updateResult = await command.UpdateAsync(
             new UpdateWishlistItemInput(
@@ -72,7 +73,7 @@ public sealed class WishlistItemTests
                 "Marca B",
                 370m,
                 ownerMediaId,
-                ["https://shop.example.com/items/2"]),
+                [new WishlistLinkInput("https://shop.example.com/items/2", null)]),
             CancellationToken.None);
 
         Assert.True(updateResult.IsSuccess);
@@ -110,11 +111,37 @@ public sealed class WishlistItemTests
                 null,
                 80m,
                 null,
-                ["https://a.com/p/1", "https://a.com/p/1"]),
+                [new WishlistLinkInput("https://a.com/p/1", null), new WishlistLinkInput("https://a.com/p/1", null)]),
             CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("validation_error", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task CreateWishlistItemWithLabelShouldPersistAndReturnLabel()
+    {
+        await using var dbContext = CreateDbContext();
+        var ownerId = Guid.NewGuid();
+        var command = CreateCommand(dbContext);
+
+        var createResult = await command.CreateAsync(
+            new CreateWishlistItemInput(
+                ownerId,
+                ClothingCategory.Shoes,
+                "Tênis",
+                null,
+                200m,
+                null,
+                [new WishlistLinkInput("https://shop.example.com/tenis", "Pinterest inspiration")]),
+            CancellationToken.None);
+
+        Assert.True(createResult.IsSuccess);
+        Assert.Equal("Pinterest inspiration", createResult.Value.ExternalLinks[0].Label);
+
+        var listed = await command.ListAsync(ownerId, false, CancellationToken.None);
+        Assert.Single(listed);
+        Assert.Equal("Pinterest inspiration", listed[0].ExternalLinks[0].Label);
     }
 
     private static CreateWishlistItemCommand CreateCommand(VirtualWardrobeDbContext dbContext)

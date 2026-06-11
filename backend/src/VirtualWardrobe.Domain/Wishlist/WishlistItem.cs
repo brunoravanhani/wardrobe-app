@@ -69,7 +69,7 @@ public sealed class WishlistItem : Entity<WishlistItemId>
         string? brand,
         decimal targetPrice,
         MediaAssetId? inspirationImageAssetId,
-        IEnumerable<string>? externalLinks = null,
+        IEnumerable<(string Url, string? Label)>? externalLinks = null,
         DateTime? createdAtUtc = null)
     {
         Validate(ownerUserId, name, targetPrice);
@@ -133,7 +133,7 @@ public sealed class WishlistItem : Entity<WishlistItemId>
         string? brand,
         decimal targetPrice,
         MediaAssetId? inspirationImageAssetId,
-        IEnumerable<string>? externalLinks)
+        IEnumerable<(string Url, string? Label)>? externalLinks)
     {
         Validate(OwnerUserId, name, targetPrice);
 
@@ -207,21 +207,22 @@ public sealed class WishlistItem : Entity<WishlistItemId>
 
     private static List<WishlistExternalLink> CreateLinks(
         WishlistItemId wishlistItemId,
-        IEnumerable<string>? links,
+        IEnumerable<(string Url, string? Label)>? links,
         DateTime? createdAtUtc)
     {
         var sanitized = (links ?? [])
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x.Url))
+            .Select(x => (Url: x.Url.Trim(), x.Label))
             .ToArray();
 
-        ValidateDuplicateLinks(sanitized);
+        ValidateDuplicateLinks(sanitized.Select(x => x.Url));
 
         return sanitized
             .Select(link => WishlistExternalLink.Create(
                 WishlistExternalLinkId.New(),
                 wishlistItemId,
-                link,
+                link.Url,
+                link.Label,
                 createdAtUtc ?? DateTime.UtcNow))
             .ToList();
     }

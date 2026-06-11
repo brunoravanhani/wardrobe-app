@@ -8,7 +8,9 @@
       "Bash(Get-ChildItem *)",
       "Bash(pnpm build *)",
       "PowerShell(pnpm build *)",
-      "PowerShell(pnpm exec *)"
+      "PowerShell(pnpm exec *)",
+      "PowerShell(dotnet build *)",
+      "PowerShell(dotnet test *)"
     ]
   }
 }

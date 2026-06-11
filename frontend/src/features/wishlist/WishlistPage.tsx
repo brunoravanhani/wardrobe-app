@@ -296,13 +296,13 @@ export function WishlistPage() {
                 <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
                   {item.links.map((link) => (
                     <a
-                      key={link}
-                      href={link}
+                      key={link.url}
+                      href={link.url}
                       target="_blank"
                       rel="noreferrer"
                       className="text-amber-700 underline-offset-2 hover:underline"
                     >
-                      {deriveLinkLabel(link)}
+                      {link.label ?? deriveLinkLabel(link.url)}
                     </a>
                   ))}
                 </p>

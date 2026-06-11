@@ -62,7 +62,7 @@ public sealed partial class WishlistItemsController : ControllerBase
                 request.Brand,
                 request.TargetPrice,
                 request.InspirationImageAssetId,
-                request.Links ?? []),
+                (request.Links ?? []).Select(x => new WishlistLinkInput(x.Url, x.Label)).ToArray()),
             cancellationToken);
 
         return ToActionResult(result, StatusCodes.Status201Created);
@@ -93,7 +93,7 @@ public sealed partial class WishlistItemsController : ControllerBase
                 request.Brand,
                 request.TargetPrice,
                 request.InspirationImageAssetId,
-                request.Links ?? []),
+                (request.Links ?? []).Select(x => new WishlistLinkInput(x.Url, x.Label)).ToArray()),
             cancellationToken);
 
         return ToActionResult(result, StatusCodes.Status200OK);
@@ -196,7 +196,7 @@ public sealed partial class WishlistItemsController : ControllerBase
         var response = Map(result.Value);
         if (successStatusCode == StatusCodes.Status201Created)
         {
-            return Created();
+            return CreatedAtAction(null, response);
         }
 
         return Ok(response);
@@ -223,7 +223,7 @@ public sealed partial class WishlistItemsController : ControllerBase
             item.Brand,
             item.TargetPrice,
             item.InspirationImageAssetId?.Value,
-            item.ExternalLinks.Select(x => x.Url).ToArray(),
+            item.ExternalLinks.Select(x => new WishlistLinkPayload(x.Url, x.Label)).ToArray(),
             item.Status,
             item.PurchasedAtUtc,
             item.ConvertedWardrobeItemId);
@@ -261,13 +261,15 @@ public sealed partial class WishlistItemsController : ControllerBase
     }
 }
 
+public sealed record WishlistLinkPayload(string Url, string? Label);
+
 public sealed record CreateWishlistItemRequest(
     string Category,
     string Name,
     string? Brand,
     decimal TargetPrice,
     Guid? InspirationImageAssetId,
-    string[]? Links);
+    WishlistLinkPayload[]? Links);
 
 public sealed record UpdateWishlistItemRequest(
     string Category,
@@ -275,7 +277,7 @@ public sealed record UpdateWishlistItemRequest(
     string? Brand,
     decimal TargetPrice,
     Guid? InspirationImageAssetId,
-    string[]? Links);
+    WishlistLinkPayload[]? Links);
 
 public sealed record ConvertWishlistItemRequest(
     string? Name,
@@ -293,7 +295,7 @@ public sealed record WishlistItemResponse(
     string? Brand,
     decimal TargetPrice,
     Guid? InspirationImageAssetId,
-    string[] Links,
+    WishlistLinkPayload[] Links,
     WishlistItemStatus Status,
     DateTime? PurchasedAtUtc,
     Guid? ConvertedWardrobeItemId);

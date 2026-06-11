@@ -4,6 +4,7 @@ import {
   getCategoryLabelPtBr,
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
+import type { WishlistLink } from '../../../services/wishlistApi'
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -13,7 +14,7 @@ export type WishlistItemFormValues = {
   name: string
   brand: string | null
   targetPrice: number
-  links: string[]
+  links: WishlistLink[]
   inspirationImageFile: File | null
 }
 
@@ -22,7 +23,7 @@ export type WishlistItemFormInitialValues = {
   name: string
   brand: string | null
   targetPrice: number
-  links: string[]
+  links: WishlistLink[]
 }
 
 type WishlistItemFormProps = {
@@ -33,6 +34,8 @@ type WishlistItemFormProps = {
   onCancel: () => void
   onSubmit: (values: WishlistItemFormValues) => Promise<void>
 }
+
+type LinkRow = { url: string; label: string }
 
 type FormErrors = {
   name?: string
@@ -47,6 +50,11 @@ const defaultValues: WishlistItemFormInitialValues = {
   brand: null,
   targetPrice: 0,
   links: [],
+}
+
+function toLinkRows(links: WishlistLink[]): LinkRow[] {
+  if (links.length === 0) return [{ url: '', label: '' }]
+  return links.map((l) => ({ url: l.url, label: l.label ?? '' }))
 }
 
 export function WishlistItemForm({
@@ -65,7 +73,7 @@ export function WishlistItemForm({
   const [name, setName] = useState(values.name)
   const [brand, setBrand] = useState(values.brand ?? '')
   const [targetPrice, setTargetPrice] = useState(values.targetPrice > 0 ? formatEditablePrice(values.targetPrice) : '')
-  const [linksInput, setLinksInput] = useState(values.links.join('\n'))
+  const [linkRows, setLinkRows] = useState<LinkRow[]>(() => toLinkRows(values.links))
   const [inspirationImageFile, setInspirationImageFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
 
@@ -97,7 +105,8 @@ export function WishlistItemForm({
       nextErrors.targetPrice = 'Preco alvo nao pode ser negativo.'
     }
 
-    const linkValidationError = validateLinks(linksInput)
+    const filledRows = linkRows.filter((r) => r.url.trim().length > 0)
+    const linkValidationError = validateLinkRows(filledRows)
     if (linkValidationError) {
       nextErrors.links = linkValidationError
     }
@@ -117,7 +126,7 @@ export function WishlistItemForm({
       name: name.trim(),
       brand: brand.trim() ? brand.trim() : null,
       targetPrice: parsedPrice,
-      links: parseLinks(linksInput),
+      links: filledRows.map((r) => ({ url: r.url.trim(), label: r.label.trim() || null })),
       inspirationImageFile,
     })
   }
@@ -190,18 +199,58 @@ export function WishlistItemForm({
         </label>
       </div>
 
-      <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-links">
-        Links externos
-        <textarea
-          id="wishlist-links"
-          name="links"
-          className="min-h-24 rounded-md border border-slate-300 px-3 py-2"
-          value={linksInput}
-          onChange={(event) => setLinksInput(event.target.value)}
-          placeholder="https://loja.exemplo/item\nhttps://outro.exemplo/item"
-        />
-        {errors.links ? <span className="text-sm text-red-700">{errors.links}</span> : null}
-      </label>
+      <fieldset className="mt-3">
+        <legend className="mb-1 text-sm font-medium text-slate-800">Links externos</legend>
+        <div className="flex flex-col gap-2">
+          {linkRows.map((row, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="url"
+                aria-label={`URL do link ${index + 1}`}
+                className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={row.url}
+                onChange={(event) => {
+                  const next = [...linkRows]
+                  next[index] = { ...next[index], url: event.target.value }
+                  setLinkRows(next)
+                }}
+                placeholder="https://loja.exemplo/item"
+              />
+              <input
+                type="text"
+                aria-label={`Etiqueta do link ${index + 1}`}
+                className="w-36 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={row.label}
+                onChange={(event) => {
+                  const next = [...linkRows]
+                  next[index] = { ...next[index], label: event.target.value }
+                  setLinkRows(next)
+                }}
+                placeholder="Ex.: Ver na Loja"
+                maxLength={80}
+              />
+              {linkRows.length > 1 ? (
+                <button
+                  type="button"
+                  aria-label={`Remover link ${index + 1}`}
+                  onClick={() => setLinkRows(linkRows.filter((_, i) => i !== index))}
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-600 hover:bg-stone-50"
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setLinkRows([...linkRows, { url: '', label: '' }])}
+          className="mt-2 text-sm text-amber-700 hover:underline"
+        >
+          + Adicionar link
+        </button>
+        {errors.links ? <span className="mt-1 block text-sm text-red-700">{errors.links}</span> : null}
+      </fieldset>
 
       <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-inspirationImageFile">
         Imagem de inspiracao (JPG, PNG ou WebP)
@@ -256,23 +305,15 @@ function formatEditablePrice(value: number) {
   return value.toFixed(2).replace('.', ',')
 }
 
-function parseLinks(value: string): string[] {
-  return value
-    .split(/\n|,/) 
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-}
-
-function validateLinks(value: string): string | null {
-  const links = parseLinks(value)
-  for (const link of links) {
+function validateLinkRows(rows: LinkRow[]): string | null {
+  for (const row of rows) {
     try {
-      const parsed = new URL(link)
+      const parsed = new URL(row.url.trim())
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
         return 'Use apenas links com http:// ou https://.'
       }
     } catch {
-      return 'Informe links validos separados por linha.'
+      return 'Informe uma URL valida em cada linha de link.'
     }
   }
 

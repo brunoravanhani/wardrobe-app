@@ -8,11 +8,13 @@ public sealed class WishlistExternalLink : Entity<WishlistExternalLinkId>
         WishlistExternalLinkId id,
         WishlistItemId wishlistItemId,
         string url,
+        string? label,
         DateTime createdAtUtc)
         : base(id)
     {
         WishlistItemId = wishlistItemId;
         Url = url;
+        Label = label;
         CreatedAtUtc = createdAtUtc;
         UpdatedAtUtc = createdAtUtc;
     }
@@ -21,10 +23,13 @@ public sealed class WishlistExternalLink : Entity<WishlistExternalLinkId>
 
     public string Url { get; }
 
+    public string? Label { get; }
+
     public static WishlistExternalLink Create(
         WishlistExternalLinkId id,
         WishlistItemId wishlistItemId,
         string url,
+        string? label = null,
         DateTime? createdAtUtc = null)
     {
         if (wishlistItemId.Value == Guid.Empty)
@@ -37,15 +42,32 @@ public sealed class WishlistExternalLink : Entity<WishlistExternalLinkId>
             throw new ArgumentException("External link URL must be a valid absolute URL.", nameof(url));
         }
 
-        return new WishlistExternalLink(id, wishlistItemId, url.Trim(), createdAtUtc ?? DateTime.UtcNow);
+        return new WishlistExternalLink(id, wishlistItemId, url.Trim(), NormalizeLabel(label), createdAtUtc ?? DateTime.UtcNow);
     }
 
     public static WishlistExternalLink Rehydrate(
         WishlistExternalLinkId id,
         WishlistItemId wishlistItemId,
         string url,
+        string? label,
         DateTime createdAtUtc)
     {
-        return Create(id, wishlistItemId, url, createdAtUtc);
+        return Create(id, wishlistItemId, url, label, createdAtUtc);
+    }
+
+    private static string? NormalizeLabel(string? label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return null;
+        }
+
+        var trimmed = label.Trim();
+        if (trimmed.Length > 80)
+        {
+            throw new ArgumentException("External link label must be at most 80 characters.", nameof(label));
+        }
+
+        return trimmed;
     }
 }

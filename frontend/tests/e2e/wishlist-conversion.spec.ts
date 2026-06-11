@@ -10,7 +10,7 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
     brand: string | null
     targetPrice: number
     inspirationImageAssetId: string | null
-    links: string[]
+    links: Array<{ url: string; label: string | null }>
     status: 'Active' | 'Purchased'
     purchasedAtUtc: string | null
     convertedWardrobeItemId: string | null
@@ -55,7 +55,12 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
         brand: payload.brand ? String(payload.brand) : null,
         targetPrice: Number(payload.targetPrice),
         inspirationImageAssetId: payload.inspirationImageAssetId ? String(payload.inspirationImageAssetId) : null,
-        links: Array.isArray(payload.links) ? payload.links.map((value) => String(value)) : [],
+        links: Array.isArray(payload.links)
+          ? payload.links.map((value) => ({
+              url: String((value as { url: string }).url ?? value),
+              label: (value as { label?: string | null }).label ?? null,
+            }))
+          : [],
         status: 'Active' as const,
         purchasedAtUtc: null,
         convertedWardrobeItemId: null,
@@ -140,7 +145,7 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
   await page.getByRole('button', { name: 'Novo desejo' }).click()
   await page.getByLabel('Nome do item').fill('Bota de couro')
   await page.getByLabel('Preco alvo (R$)').fill('499,90')
-  await page.getByLabel('Links externos').fill('https://loja.exemplo/bota')
+  await page.getByLabel('URL do link 1').fill('https://loja.exemplo/bota')
   await page.getByRole('button', { name: 'Salvar desejo' }).click()
 
   await expect(page.getByText('Bota de couro')).toBeVisible()
