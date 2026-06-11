@@ -1,4 +1,5 @@
 using VirtualWardrobe.Application.Common;
+using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Domain.Wishlist;
@@ -30,13 +31,16 @@ public sealed class CreateWishlistItemCommand
 {
     private readonly IWishlistItemRepository _wishlistItemRepository;
     private readonly IMediaAssetRepository _mediaAssetRepository;
+    private readonly IPrivateMediaUrlService _mediaUrlService;
 
     public CreateWishlistItemCommand(
         IWishlistItemRepository wishlistItemRepository,
-        IMediaAssetRepository mediaAssetRepository)
+        IMediaAssetRepository mediaAssetRepository,
+        IPrivateMediaUrlService mediaUrlService)
     {
         _wishlistItemRepository = wishlistItemRepository;
         _mediaAssetRepository = mediaAssetRepository;
+        _mediaUrlService = mediaUrlService;
     }
 
     public async Task<Result<WishlistItem>> CreateAsync(CreateWishlistItemInput input, CancellationToken cancellationToken)
@@ -83,6 +87,8 @@ public sealed class CreateWishlistItemCommand
             return Result.Failure<WishlistItem>(ResultError.NotFound("Wishlist item was not found."));
         }
 
+        var oldInspirationImageId = item.InspirationImageAssetId?.Value;
+
         var mediaValidation = await ValidateMediaOwnershipAsync(ownerUserId, input.InspirationImageAssetId, cancellationToken);
 
         if (mediaValidation.IsFailure)
@@ -102,6 +108,12 @@ public sealed class CreateWishlistItemCommand
 
             await _wishlistItemRepository.UpdateAsync(item, cancellationToken);
             await _wishlistItemRepository.SaveChangesAsync(cancellationToken);
+
+            if (oldInspirationImageId.HasValue && oldInspirationImageId != input.InspirationImageAssetId)
+            {
+                await _mediaUrlService.DeleteMediaAssetAsync(oldInspirationImageId.Value, input.OwnerUserId, cancellationToken);
+            }
+
             return Result.Success(item);
         }
         catch (ArgumentException exception)
@@ -118,8 +130,16 @@ public sealed class CreateWishlistItemCommand
             return Result.Failure(ResultError.NotFound("Wishlist item was not found."));
         }
 
+        var inspirationImageId = item.InspirationImageAssetId?.Value;
+
         await _wishlistItemRepository.RemoveAsync(item, cancellationToken);
         await _wishlistItemRepository.SaveChangesAsync(cancellationToken);
+
+        if (inspirationImageId.HasValue)
+        {
+            await _mediaUrlService.DeleteMediaAssetAsync(inspirationImageId.Value, ownerUserId, cancellationToken);
+        }
+
         return Result.Success();
     }
 

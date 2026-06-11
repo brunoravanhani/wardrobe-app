@@ -102,6 +102,23 @@ public sealed class S3PresignedUrlService : IPrivateMediaUrlService
         return new PresignedViewResult(new Uri(viewUrl), expiresAtUtc);
     }
 
+    public async Task DeleteMediaAssetAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+    {
+        var mediaAsset = await _dbContext.MediaAssets.SingleOrDefaultAsync(
+            x => x.Id == mediaAssetId && x.UserId == ownerUserId,
+            cancellationToken);
+
+        if (mediaAsset is null)
+        {
+            return;
+        }
+
+        await _s3Client.DeleteObjectAsync(_options.BucketName, mediaAsset.StorageKey, cancellationToken);
+
+        _dbContext.MediaAssets.Remove(mediaAsset);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private static void ValidateUploadRequest(PresignedUploadRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.FileName))

@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import {
   CLOTHING_CATEGORIES,
   getCategoryLabelPtBr,
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
-import { useDraftState } from '../../../app/providers/DraftStateProvider'
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -30,7 +29,6 @@ export type WardrobeItemFormInitialValues = {
 type WardrobeItemFormProps = {
   mode: 'create' | 'edit'
   initialValues?: WardrobeItemFormInitialValues
-  draftStorageKey?: string
   busy?: boolean
   submitError?: string | null
   onCancel: () => void
@@ -57,40 +55,14 @@ const defaultValues: WardrobeItemFormInitialValues = {
 export function WardrobeItemForm({
   mode,
   initialValues,
-  draftStorageKey,
   busy = false,
   submitError,
   onCancel,
   onSubmit,
 }: WardrobeItemFormProps) {
-  const draftState = useDraftState()
   const values = useMemo(() => {
-    if (initialValues) {
-      return initialValues
-    }
-
-    if (!draftStorageKey) {
-      return defaultValues
-    }
-
-    const rawDraft = draftState.readDraft(draftStorageKey)
-    if (!rawDraft) {
-      return defaultValues
-    }
-
-    try {
-      const parsed = JSON.parse(rawDraft) as Partial<WardrobeItemFormInitialValues>
-      return {
-        category: isCategory(parsed.category) ? parsed.category : defaultValues.category,
-        name: typeof parsed.name === 'string' ? parsed.name : defaultValues.name,
-        size: typeof parsed.size === 'string' ? parsed.size : defaultValues.size,
-        brand: typeof parsed.brand === 'string' || parsed.brand === null ? parsed.brand : defaultValues.brand,
-        price: typeof parsed.price === 'number' || parsed.price === null ? parsed.price : defaultValues.price,
-      }
-    } catch {
-      return defaultValues
-    }
-  }, [draftState, draftStorageKey, initialValues])
+    return initialValues ?? defaultValues
+  }, [initialValues])
 
   const [category, setCategory] = useState<ClothingCategory>(values.category)
   const [name, setName] = useState(values.name)
@@ -100,23 +72,6 @@ export function WardrobeItemForm({
   const [bodyImageFile, setBodyImageFile] = useState<File | null>(null)
   const [careTagImageFile, setCareTagImageFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
-
-  useEffect(() => {
-    if (!draftStorageKey || mode !== 'create') {
-      return
-    }
-
-    draftState.writeDraft(
-      draftStorageKey,
-      JSON.stringify({
-        category,
-        name,
-        size,
-        brand: brand.trim() ? brand.trim() : null,
-        price: parsePrice(price),
-      }),
-    )
-  }, [brand, category, draftState, draftStorageKey, mode, name, price, size])
 
   const title = mode === 'create' ? 'Nova peca do guarda-roupa' : 'Editar peca do guarda-roupa'
 
@@ -342,8 +297,4 @@ function validateImage(file: File | null): string | null {
   }
 
   return null
-}
-
-function isCategory(value: unknown): value is ClothingCategory {
-  return typeof value === 'string' && CLOTHING_CATEGORIES.includes(value as ClothingCategory)
 }

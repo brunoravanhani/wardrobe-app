@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
@@ -120,7 +121,19 @@ public sealed class WishlistItemTests
     {
         var wishlistRepository = new EfWishlistItemRepository(dbContext);
         var mediaRepository = new EfMediaAssetRepository(dbContext);
-        return new CreateWishlistItemCommand(wishlistRepository, mediaRepository);
+        return new CreateWishlistItemCommand(wishlistRepository, mediaRepository, new NoOpMediaUrlService());
+    }
+
+    private sealed class NoOpMediaUrlService : IPrivateMediaUrlService
+    {
+        public Task<PresignedUploadResult> CreateUploadUrlAsync(PresignedUploadRequest request, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task<PresignedViewResult> CreateViewUrlAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task DeleteMediaAssetAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 
     private static VirtualWardrobeDbContext CreateDbContext()

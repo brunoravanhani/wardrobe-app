@@ -5,7 +5,10 @@
       "Bash(dotnet test *)",
       "Bash(dotnet run *)",
       "Bash(dotnet ef *)",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(pnpm build *)",
+      "PowerShell(pnpm build *)",
+      "PowerShell(pnpm exec *)"
     ]
   }
 }

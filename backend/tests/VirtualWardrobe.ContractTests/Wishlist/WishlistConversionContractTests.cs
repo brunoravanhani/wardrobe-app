@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using VirtualWardrobe.Api.Controllers;
+using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
@@ -21,7 +22,7 @@ public sealed class WishlistConversionContractTests
         var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId);
         var wishlistRepository = new InMemoryWishlistItemRepository();
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
-        var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository);
+        var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository, new NoOpMediaUrlService());
         var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
 
         var controller = new WishlistItemsController(wishlistCommand, conversionCommand, NullLogger<WishlistItemsController>.Instance);
@@ -29,7 +30,7 @@ public sealed class WishlistConversionContractTests
 
         var createAction = await controller.CreateAsync(
             new CreateWishlistItemRequest(
-                ClothingCategory.Shirt,
+                "Shirt",
                 "Camisa casual",
                 "Marca D",
                 150m,
@@ -208,5 +209,17 @@ public sealed class WishlistConversionContractTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class NoOpMediaUrlService : IPrivateMediaUrlService
+    {
+        public Task<PresignedUploadResult> CreateUploadUrlAsync(PresignedUploadRequest request, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task<PresignedViewResult> CreateViewUrlAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task DeleteMediaAssetAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 }

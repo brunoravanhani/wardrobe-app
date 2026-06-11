@@ -44,12 +44,20 @@ public sealed partial class WishlistItemsController : ControllerBase
         [FromBody] CreateWishlistItemRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryParseCategory(request.Category, out var category))
+        {
+            return Problem(
+                title: "Wishlist request failed",
+                detail: "Invalid category.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var ownerUserId = User.GetRequiredUserId();
 
         var result = await _createWishlistItemCommand.CreateAsync(
             new CreateWishlistItemInput(
                 ownerUserId,
-                request.Category,
+                category,
                 request.Name,
                 request.Brand,
                 request.TargetPrice,
@@ -66,13 +74,21 @@ public sealed partial class WishlistItemsController : ControllerBase
         [FromBody] UpdateWishlistItemRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryParseCategory(request.Category, out var category))
+        {
+            return Problem(
+                title: "Wishlist request failed",
+                detail: "Invalid category.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var ownerUserId = User.GetRequiredUserId();
 
         var result = await _createWishlistItemCommand.UpdateAsync(
             new UpdateWishlistItemInput(
                 itemId,
                 ownerUserId,
-                request.Category,
+                category,
                 request.Name,
                 request.Brand,
                 request.TargetPrice,
@@ -118,6 +134,20 @@ public sealed partial class WishlistItemsController : ControllerBase
         [FromBody] ConvertWishlistItemRequest request,
         CancellationToken cancellationToken)
     {
+        ClothingCategory? category = null;
+        if (request.Category is not null)
+        {
+            if (!TryParseCategory(request.Category, out var parsedCategory))
+            {
+                return Problem(
+                    title: "Wishlist request failed",
+                    detail: "Invalid category.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            category = parsedCategory;
+        }
+
         TelemetryConfig.WishlistConversionTotal.Add(1);
         var ownerUserId = User.GetRequiredUserId();
         Log.ConversionInitiated(_logger, itemId, ownerUserId);
@@ -127,7 +157,7 @@ public sealed partial class WishlistItemsController : ControllerBase
                 itemId,
                 ownerUserId,
                 request.Name,
-                request.Category,
+                category,
                 request.Size,
                 request.Brand,
                 request.Price,
@@ -166,7 +196,7 @@ public sealed partial class WishlistItemsController : ControllerBase
         var response = Map(result.Value);
         if (successStatusCode == StatusCodes.Status201Created)
         {
-            return CreatedAtAction(nameof(ListAsync), response);
+            return Created();
         }
 
         return Ok(response);
@@ -212,6 +242,12 @@ public sealed partial class WishlistItemsController : ControllerBase
             item.CareTagImageAssetId?.Value);
     }
 
+    private static bool TryParseCategory(string category, out ClothingCategory parsedCategory)
+    {
+        return Enum.TryParse(category, true, out parsedCategory)
+               && Enum.IsDefined(parsedCategory);
+    }
+
     private static partial class Log
     {
         [LoggerMessage(Level = LogLevel.Information, Message = "Wishlist conversion initiated for item {WishlistItemId} by user {UserId}")]
@@ -226,7 +262,7 @@ public sealed partial class WishlistItemsController : ControllerBase
 }
 
 public sealed record CreateWishlistItemRequest(
-    ClothingCategory Category,
+    string Category,
     string Name,
     string? Brand,
     decimal TargetPrice,
@@ -234,7 +270,7 @@ public sealed record CreateWishlistItemRequest(
     string[]? Links);
 
 public sealed record UpdateWishlistItemRequest(
-    ClothingCategory Category,
+    string Category,
     string Name,
     string? Brand,
     decimal TargetPrice,
@@ -243,7 +279,7 @@ public sealed record UpdateWishlistItemRequest(
 
 public sealed record ConvertWishlistItemRequest(
     string? Name,
-    ClothingCategory? Category,
+    string? Category,
     string Size,
     string? Brand,
     decimal? Price,

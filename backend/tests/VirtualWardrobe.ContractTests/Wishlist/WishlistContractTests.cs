@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using VirtualWardrobe.Api.Controllers;
+using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
@@ -22,7 +23,8 @@ public sealed class WishlistContractTests
         var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId, mediaId);
         var wishlistRepository = new InMemoryWishlistItemRepository();
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
-        var command = new CreateWishlistItemCommand(wishlistRepository, mediaRepository);
+        var noOpMedia = new NoOpMediaUrlService();
+        var command = new CreateWishlistItemCommand(wishlistRepository, mediaRepository, noOpMedia);
         var convertCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
 
         var controller = new WishlistItemsController(command, convertCommand, NullLogger<WishlistItemsController>.Instance);
@@ -30,7 +32,7 @@ public sealed class WishlistContractTests
 
         var createAction = await controller.CreateAsync(
             new CreateWishlistItemRequest(
-                ClothingCategory.Coats,
+                "Coats",
                 "Jaqueta",
                 "Marca",
                 280m,
@@ -44,7 +46,7 @@ public sealed class WishlistContractTests
         var updateAction = await controller.UpdateAsync(
             createdItem.Id,
             new UpdateWishlistItemRequest(
-                ClothingCategory.Coats,
+                "Coats",
                 "Jaqueta inverno",
                 "Outra",
                 300m,
@@ -145,6 +147,18 @@ public sealed class WishlistContractTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class NoOpMediaUrlService : IPrivateMediaUrlService
+    {
+        public Task<PresignedUploadResult> CreateUploadUrlAsync(PresignedUploadRequest request, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task<PresignedViewResult> CreateViewUrlAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task DeleteMediaAssetAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 
     private sealed class InMemoryWardrobeItemRepository : IWardrobeItemRepository

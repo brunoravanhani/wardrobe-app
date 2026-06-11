@@ -110,7 +110,7 @@ test('cria, edita e filtra pecas do guarda-roupa', async ({ page }) => {
 
   await page.goto('http://127.0.0.1:4173')
 
-  await expect(page.getByRole('heading', { name: 'Guarda-roupa' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meu Guarda-roupa' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Nova peca' }).click()
   await page.getByLabel('Nome da peca').fill('Camiseta Azul')
