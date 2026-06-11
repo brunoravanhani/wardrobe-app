@@ -125,7 +125,7 @@ test('cria, edita e alterna entre wishlist ativa e historico', async ({ page }) 
 
   await page.goto('http://127.0.0.1:4173/wishlist')
 
-  await expect(page.getByRole('heading', { name: 'Wishlist', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Minha Wishlist', exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Novo desejo' }).click()
   await page.getByLabel('Nome do item').fill('Jaqueta Jeans')

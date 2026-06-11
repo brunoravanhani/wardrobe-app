@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthSession } from '../../app/providers/auth-context'
-import { useDraftState } from '../../app/providers/DraftStateProvider'
 import {
   createWishlistApi,
   type WishlistItem,
@@ -16,6 +15,8 @@ import {
   ConvertWishlistItemDialog,
   type ConvertWishlistItemDialogValues,
 } from './components/ConvertWishlistItemDialog'
+import { createMediaApi } from '../../services/mediaApi'
+import { AssetImage } from '../../components/AssetImage'
 
 type ViewMode = 'active' | 'history'
 
@@ -28,16 +29,20 @@ type EditorState =
 
 export function WishlistPage() {
   const auth = useAuthSession()
-  const draftState = useDraftState()
   const accessToken = auth.status === 'authenticated' ? auth.accessToken : null
 
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000'
   const api = useMemo(
     () =>
       createWishlistApi({
-        baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000',
+        baseUrl,
         getAccessToken: () => accessToken,
       }),
-    [accessToken],
+    [baseUrl, accessToken],
+  )
+  const mediaApi = useMemo(
+    () => createMediaApi({ baseUrl, getAccessToken: () => accessToken }),
+    [baseUrl, accessToken],
   )
 
   const [items, setItems] = useState<WishlistItem[]>([])
@@ -117,7 +122,6 @@ export function WishlistPage() {
           links: values.links,
           inspirationImageAssetId,
         })
-        draftState.clearDraft('wishlist-item:create')
       }
 
       setEditor(null)
@@ -179,15 +183,15 @@ export function WishlistPage() {
   }
 
   return (
-    <section className="rounded-xl border border-amber-300 bg-white/85 p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-semibold text-slate-900">Wishlist</h2>
+    <section>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-3xl font-semibold text-slate-900">Minha Wishlist</h2>
 
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => void loadItems()}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+            className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-stone-50"
           >
             Atualizar
           </button>
@@ -197,14 +201,18 @@ export function WishlistPage() {
               setSubmitError(null)
               setEditor({ mode: 'create' })
             }}
-            className="rounded-md bg-amber-700 px-3 py-2 text-sm font-medium text-white"
+            className="rounded-md bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800"
           >
             Novo desejo
           </button>
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Visualizacao da wishlist">
+      <div
+        className="mb-5 flex flex-wrap gap-6 border-b border-stone-200"
+        role="tablist"
+        aria-label="Visualizacao da wishlist"
+      >
         <ViewTab
           active={viewMode === 'active'}
           label="Ativos"
@@ -222,12 +230,11 @@ export function WishlistPage() {
       </div>
 
       {editor ? (
-        <div className="mb-4">
+        <div className="mb-5">
           <WishlistItemForm
             key={editor.mode === 'edit' ? `edit-${editor.item.id}` : 'create'}
             mode={editor.mode}
             initialValues={formInitialValues}
-            draftStorageKey={editor.mode === 'create' ? 'wishlist-item:create' : undefined}
             busy={isSaving}
             submitError={submitError}
             onCancel={() => setEditor(null)}
@@ -255,28 +262,60 @@ export function WishlistPage() {
       {isLoading ? <p className="text-slate-700">Carregando wishlist...</p> : null}
 
       {!isLoading && items.length === 0 ? (
-        <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-700">
+        <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-slate-600">
           Nenhum item encontrado nesta visualizacao.
         </p>
       ) : null}
 
-      <ul className="grid gap-3 md:grid-cols-2">
+      <ul className="grid gap-5 md:grid-cols-2">
         {items.map((item) => (
-          <li key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-slate-900">{item.name}</h3>
-                <p className="text-sm text-slate-600">{getCategoryLabelPtBr(item.category)}</p>
+          <li
+            key={item.id}
+            className="flex gap-4 overflow-hidden rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <AssetImage
+              assetId={item.inspirationImageAssetId}
+              alt={item.name}
+              loadViewUrl={mediaApi.createViewUrl}
+              className="h-32 w-24 shrink-0 rounded-lg"
+            />
+
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="truncate font-semibold text-slate-900">{item.name}</h3>
+                  <p className="text-sm text-slate-500">{getCategoryLabelPtBr(item.category)}</p>
+                </div>
+                <StatusBadge status={item.status} />
               </div>
 
-              <div className="flex gap-2">
+              {item.brand ? <p className="text-sm text-slate-600">{item.brand}</p> : null}
+              <p className="text-sm font-medium text-slate-800">Preco alvo: {formatPrice(item.targetPrice)}</p>
+
+              {item.links.length > 0 ? (
+                <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                  {item.links.map((link) => (
+                    <a
+                      key={link}
+                      href={link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-amber-700 underline-offset-2 hover:underline"
+                    >
+                      {deriveLinkLabel(link)}
+                    </a>
+                  ))}
+                </p>
+              ) : null}
+
+              <div className="mt-auto flex flex-wrap gap-2 pt-2">
                 {item.status === 'Active' ? (
                   <button
                     type="button"
                     onClick={() => {
                       void handleMarkAsPurchased(item)
                     }}
-                    className="rounded-md border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-sm text-white"
+                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
                   >
                     Marcar como comprado
                   </button>
@@ -290,7 +329,7 @@ export function WishlistPage() {
                       setConversionError(null)
                       setConversionSuccessMessage(null)
                     }}
-                    className="rounded-md border border-emerald-700 bg-emerald-700 px-3 py-1.5 text-sm text-white"
+                    className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800"
                   >
                     Converter para guarda-roupa
                   </button>
@@ -302,23 +341,12 @@ export function WishlistPage() {
                     setSubmitError(null)
                     setEditor({ mode: 'edit', item })
                   }}
-                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800"
+                  className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-stone-50"
                 >
                   Editar
                 </button>
               </div>
             </div>
-
-            <dl className="space-y-1 text-sm text-slate-700">
-              <MetaRow label="Status" value={toStatusLabel(item.status)} />
-              <MetaRow
-                label="Conversao"
-                value={item.convertedWardrobeItemId ? 'Convertido' : 'Nao convertido'}
-              />
-              <MetaRow label="Marca" value={item.brand ?? 'Nao informada'} />
-              <MetaRow label="Preco alvo" value={formatPrice(item.targetPrice)} />
-              <MetaRow label="Links" value={item.links.length > 0 ? item.links.join(', ') : 'Nao informados'} />
-            </dl>
           </li>
         ))}
       </ul>
@@ -334,10 +362,10 @@ function ViewTab({ active, label, onClick }: { active: boolean; label: string; o
       aria-selected={active}
       onClick={onClick}
       className={[
-        'rounded-md border px-3 py-1.5 text-sm',
+        '-mb-px border-b-2 px-1 pb-2 text-sm font-medium transition-colors',
         active
-          ? 'border-amber-700 bg-amber-700 text-white'
-          : 'border-slate-300 bg-white text-slate-800 hover:border-amber-700 hover:text-amber-700',
+          ? 'border-amber-700 text-amber-800'
+          : 'border-transparent text-slate-500 hover:text-amber-700',
       ].join(' ')}
     >
       {label}
@@ -345,12 +373,26 @@ function ViewTab({ active, label, onClick }: { active: boolean; label: string; o
   )
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
+function StatusBadge({ status }: { status: WishlistItemStatus }) {
+  const isPurchased = status === 'Purchased'
   return (
-    <div>
-      <dt className="inline font-medium">{label}:</dt> <dd className="inline">{value}</dd>
-    </div>
+    <span
+      className={[
+        'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium',
+        isPurchased ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800',
+      ].join(' ')}
+    >
+      {toStatusLabel(status)}
+    </span>
   )
+}
+
+function deriveLinkLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
 }
 
 function formatPrice(value: number) {

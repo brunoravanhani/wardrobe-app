@@ -48,7 +48,7 @@ public sealed class WardrobeContractTests
 
         var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId, mediaId);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
-        var command = new CreateWardrobeItemCommand(wardrobeRepository, mediaRepository);
+        var command = new CreateWardrobeItemCommand(wardrobeRepository, mediaRepository, new FakePrivateMediaUrlService());
 
         var controller = new WardrobeItemsController(command);
         AttachUser(controller, ownerUserId);
@@ -227,5 +227,8 @@ public sealed class WardrobeContractTests
         {
             return Task.FromResult(new PresignedViewResult(new Uri("https://example.com/view"), DateTime.UtcNow.AddMinutes(10)));
         }
+
+        public Task DeleteMediaAssetAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 }

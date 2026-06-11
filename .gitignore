@@ -16,3 +16,6 @@ Thumbs.db
 .idea/
 .vscode/
 .vs/
+
+# Claude Code worktrees (never commit these)
+.claude/worktrees/

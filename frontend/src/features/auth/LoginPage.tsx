@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthActions, useAuthSession } from '../../app/providers/auth-context'
 import { createAuthApi } from '../../services/authApi'
+import { HangerIcon } from '../../components/BrandLogo'
 
 type RedirectState = {
   from?: {
@@ -64,10 +65,6 @@ export function LoginPage() {
       }),
     [],
   )
-
-  if (auth.status === 'authenticated') {
-    return null
-  }
 
   const completeLoginFromIdToken = useCallback(
     async (token: string) => {
@@ -153,27 +150,36 @@ export function LoginPage() {
     }
   }, [completeLoginFromIdToken, googleClientId])
 
+  if (auth.status === 'authenticated') {
+    return null
+  }
+
   return (
-    <section className="mx-auto w-full max-w-xl rounded-xl border border-amber-300 bg-white/90 p-6 shadow-sm">
-      <h2 className="mb-2 text-2xl font-semibold text-slate-900">Entrar no Virtual Wardrobe</h2>
-      <p className="mb-4 text-sm text-slate-700">
-        Entre com Google para obter token de sessao e acessar os endpoints autenticados da API.
-      </p>
-
-      {googleClientId ? (
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-          {isGoogleLoading ? <p className="mb-3 text-sm text-slate-700">Carregando botao do Google...</p> : null}
-          <div ref={googleButtonRef} className="min-h-10" aria-live="polite" />
+    <div className="w-full max-w-md">
+      <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-md">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+          <HangerIcon className="h-8 w-8" />
         </div>
-      ) : (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          VITE_GOOGLE_CLIENT_ID nao configurado. Configure no frontend/.env para habilitar o login.
-        </p>
-      )}
+        <h1 className="text-2xl font-semibold text-slate-900">Guarda-Roupa &amp; Wishlist</h1>
+        <p className="mt-2 text-sm text-slate-600">Organize seu guarda-roupa de forma simples e elegante.</p>
 
-      {isSubmitting ? <p className="mt-4 text-sm text-slate-700">Autenticando...</p> : null}
-      {errorMessage ? <p className="mt-4 text-sm text-red-700">{errorMessage}</p> : null}
-    </section>
+        <div className="mt-6">
+          {googleClientId ? (
+            <div className="flex flex-col items-center gap-3">
+              {isGoogleLoading ? <p className="text-sm text-slate-600">Carregando botao do Google...</p> : null}
+              <div ref={googleButtonRef} className="flex min-h-10 justify-center" aria-live="polite" />
+            </div>
+          ) : (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              VITE_GOOGLE_CLIENT_ID nao configurado. Configure no frontend/.env para habilitar o login.
+            </p>
+          )}
+
+          {isSubmitting ? <p className="mt-4 text-sm text-slate-600">Autenticando...</p> : null}
+          {errorMessage ? <p className="mt-4 text-sm text-red-700">{errorMessage}</p> : null}
+        </div>
+      </div>
+    </div>
   )
 }
 

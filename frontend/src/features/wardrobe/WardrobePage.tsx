@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthSession } from '../../app/providers/auth-context'
-import { useDraftState } from '../../app/providers/DraftStateProvider'
 import {
   CLOTHING_CATEGORIES,
   createWardrobeApi,
@@ -13,6 +12,8 @@ import {
   type WardrobeItemFormInitialValues,
   type WardrobeItemFormValues,
 } from './components/WardrobeItemForm'
+import { createMediaApi } from '../../services/mediaApi'
+import { AssetImage } from '../../components/AssetImage'
 
 type CategoryFilter = 'all' | ClothingCategory
 
@@ -25,15 +26,19 @@ type EditorState =
 
 export function WardrobePage() {
   const auth = useAuthSession()
-  const draftState = useDraftState()
   const accessToken = auth.status === 'authenticated' ? auth.accessToken : null
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000'
   const api = useMemo(
     () =>
       createWardrobeApi({
-        baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000',
+        baseUrl,
         getAccessToken: () => accessToken,
       }),
-    [accessToken],
+    [baseUrl, accessToken],
+  )
+  const mediaApi = useMemo(
+    () => createMediaApi({ baseUrl, getAccessToken: () => accessToken }),
+    [baseUrl, accessToken],
   )
 
   const [items, setItems] = useState<WardrobeItem[]>([])
@@ -124,7 +129,6 @@ export function WardrobePage() {
           bodyImageAssetId,
           careTagImageAssetId,
         })
-        draftState.clearDraft('wardrobe-item:create')
       }
 
       setEditor(null)
@@ -148,14 +152,14 @@ export function WardrobePage() {
   }
 
   return (
-    <section className="rounded-xl border border-amber-300 bg-white/85 p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-semibold text-slate-900">Guarda-roupa</h2>
+    <section>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-3xl font-semibold text-slate-900">Meu Guarda-roupa</h2>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => void loadItems()}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+            className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-stone-50"
           >
             Atualizar
           </button>
@@ -165,14 +169,14 @@ export function WardrobePage() {
               setSubmitError(null)
               setEditor({ mode: 'create' })
             }}
-            className="rounded-md bg-amber-700 px-3 py-2 text-sm font-medium text-white"
+            className="rounded-md bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800"
           >
             Nova peca
           </button>
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Filtro de categorias">
+      <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Filtro de categorias">
         {categoryTabs.map((tab) => {
           const isActive = selectedCategory === tab.key
           return (
@@ -185,10 +189,10 @@ export function WardrobePage() {
                 setSelectedCategory(tab.key)
               }}
               className={[
-                'rounded-md border px-3 py-1.5 text-sm',
+                'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
                 isActive
                   ? 'border-amber-700 bg-amber-700 text-white'
-                  : 'border-slate-300 bg-white text-slate-800 hover:border-amber-700 hover:text-amber-700',
+                  : 'border-stone-300 bg-white text-slate-700 hover:border-amber-600 hover:text-amber-700',
               ].join(' ')}
             >
               {tab.label}
@@ -198,12 +202,11 @@ export function WardrobePage() {
       </div>
 
       {editor ? (
-        <div className="mb-4">
+        <div className="mb-5">
           <WardrobeItemForm
             key={editor.mode === 'edit' ? `edit-${editor.item.id}` : 'create'}
             mode={editor.mode}
             initialValues={formInitialValues}
-            draftStorageKey={editor.mode === 'create' ? 'wardrobe-item:create' : undefined}
             busy={isSaving}
             submitError={submitError}
             onCancel={() => setEditor(null)}
@@ -216,42 +219,51 @@ export function WardrobePage() {
       {isLoading ? <p className="text-slate-700">Carregando pecas...</p> : null}
 
       {!isLoading && items.length === 0 ? (
-        <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-700">
+        <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-slate-600">
           Nenhuma peca encontrada para este filtro.
         </p>
       ) : null}
 
-      <ul className="grid gap-3 md:grid-cols-2">
+      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
-          <li key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="mb-2 flex items-start justify-between gap-2">
+          <li
+            key={item.id}
+            className="flex flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+          >
+            <AssetImage
+              assetId={item.bodyImageAssetId}
+              alt={item.name}
+              loadViewUrl={mediaApi.createViewUrl}
+              className="aspect-[4/5] w-full"
+            />
+            <div className="flex flex-1 flex-col gap-3 p-4">
               <div>
                 <h3 className="font-semibold text-slate-900">{item.name}</h3>
-                <p className="text-sm text-slate-600">{getCategoryLabelPtBr(item.category)}</p>
+                <p className="text-sm text-slate-500">{getCategoryLabelPtBr(item.category)}</p>
               </div>
+              <dl className="space-y-0.5 text-sm text-slate-700">
+                <div>
+                  <dt className="inline font-medium">Tamanho:</dt> <dd className="inline">{item.size}</dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium">Marca:</dt>{' '}
+                  <dd className="inline">{item.brand ?? 'Nao informada'}</dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium">Preco:</dt> <dd className="inline">{formatPrice(item.price)}</dd>
+                </div>
+              </dl>
               <button
                 type="button"
                 onClick={() => {
                   setSubmitError(null)
                   setEditor({ mode: 'edit', item })
                 }}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800"
+                className="mt-auto w-full rounded-md border border-amber-600 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50"
               >
                 Editar
               </button>
             </div>
-            <dl className="space-y-1 text-sm text-slate-700">
-              <div>
-                <dt className="inline font-medium">Tamanho:</dt> <dd className="inline">{item.size}</dd>
-              </div>
-              <div>
-                <dt className="inline font-medium">Marca:</dt> <dd className="inline">{item.brand ?? 'Nao informada'}</dd>
-              </div>
-              <div>
-                <dt className="inline font-medium">Preco:</dt>{' '}
-                <dd className="inline">{formatPrice(item.price)}</dd>
-              </div>
-            </dl>
           </li>
         ))}
       </ul>

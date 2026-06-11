@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useDraftState } from '../../../app/providers/DraftStateProvider'
+import { useMemo, useState, type FormEvent } from 'react'
 import {
   CLOTHING_CATEGORIES,
   getCategoryLabelPtBr,
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
-import { isClothingCategory } from '../../../services/wishlistApi'
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -30,7 +28,6 @@ export type WishlistItemFormInitialValues = {
 type WishlistItemFormProps = {
   mode: 'create' | 'edit'
   initialValues?: WishlistItemFormInitialValues
-  draftStorageKey?: string
   busy?: boolean
   submitError?: string | null
   onCancel: () => void
@@ -55,41 +52,14 @@ const defaultValues: WishlistItemFormInitialValues = {
 export function WishlistItemForm({
   mode,
   initialValues,
-  draftStorageKey,
   busy = false,
   submitError,
   onCancel,
   onSubmit,
 }: WishlistItemFormProps) {
-  const draftState = useDraftState()
-
   const values = useMemo(() => {
-    if (initialValues) {
-      return initialValues
-    }
-
-    if (!draftStorageKey) {
-      return defaultValues
-    }
-
-    const rawDraft = draftState.readDraft(draftStorageKey)
-    if (!rawDraft) {
-      return defaultValues
-    }
-
-    try {
-      const parsed = JSON.parse(rawDraft) as Partial<WishlistItemFormInitialValues>
-      return {
-        category: isClothingCategory(parsed.category) ? parsed.category : defaultValues.category,
-        name: typeof parsed.name === 'string' ? parsed.name : defaultValues.name,
-        brand: typeof parsed.brand === 'string' || parsed.brand === null ? parsed.brand : defaultValues.brand,
-        targetPrice: typeof parsed.targetPrice === 'number' ? parsed.targetPrice : defaultValues.targetPrice,
-        links: Array.isArray(parsed.links) ? parsed.links.filter((value): value is string => typeof value === 'string') : [],
-      }
-    } catch {
-      return defaultValues
-    }
-  }, [draftState, draftStorageKey, initialValues])
+    return initialValues ?? defaultValues
+  }, [initialValues])
 
   const [category, setCategory] = useState<ClothingCategory>(values.category)
   const [name, setName] = useState(values.name)
@@ -98,23 +68,6 @@ export function WishlistItemForm({
   const [linksInput, setLinksInput] = useState(values.links.join('\n'))
   const [inspirationImageFile, setInspirationImageFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
-
-  useEffect(() => {
-    if (!draftStorageKey || mode !== 'create') {
-      return
-    }
-
-    draftState.writeDraft(
-      draftStorageKey,
-      JSON.stringify({
-        category,
-        name,
-        brand: brand.trim() ? brand.trim() : null,
-        targetPrice: parsePrice(targetPrice) ?? 0,
-        links: parseLinks(linksInput),
-      }),
-    )
-  }, [brand, category, draftState, draftStorageKey, linksInput, mode, name, targetPrice])
 
   const title = mode === 'create' ? 'Novo item da wishlist' : 'Editar item da wishlist'
   const submitLabel = mode === 'create' ? 'Salvar desejo' : 'Salvar alteracoes'

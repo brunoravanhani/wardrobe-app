@@ -62,5 +62,8 @@ public sealed class WishlistMediaValidationContractTests
         {
             return Task.FromResult(new PresignedViewResult(new Uri("https://example.com/view"), DateTime.UtcNow.AddMinutes(5)));
         }
+
+        public Task DeleteMediaAssetAsync(Guid mediaAssetId, Guid ownerUserId, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 }

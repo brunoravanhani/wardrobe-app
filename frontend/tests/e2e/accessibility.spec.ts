@@ -2,19 +2,6 @@ import { expect, test } from '@playwright/test'
 
 const apiBase = process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:9323'
 
-function mockAuth(page: Parameters<typeof test>[1] extends (args: { page: infer P }) => unknown ? P : never) {
-  return page.route(`${apiBase}/v1/auth/google/exchange`, (route) =>
-    route.fulfill({
-      status: 200,
-      json: {
-        accessToken: 'mock-token',
-        expiresAtUtc: new Date(Date.now() + 3600_000).toISOString(),
-        user: { userId: crypto.randomUUID(), email: 'user@example.com', displayName: 'User', locale: 'pt-BR' },
-      },
-    }),
-  )
-}
-
 test.describe('acessibilidade - guarda-roupa', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/*', async (route) => {

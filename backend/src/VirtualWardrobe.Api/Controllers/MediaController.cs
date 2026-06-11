@@ -58,8 +58,24 @@ public sealed partial class MediaController : ControllerBase
         var ownerUserId = User.GetRequiredUserId();
 
         Log.ViewUrlRequested(_logger, mediaAssetId, ownerUserId);
-        var viewResult = await _privateMediaUrlService.CreateViewUrlAsync(mediaAssetId, ownerUserId, cancellationToken);
-        return Ok(new CreateViewUrlResponse(viewResult.ViewUrl, viewResult.ExpiresAtUtc));
+        try
+        {
+            var viewResult = await _privateMediaUrlService.CreateViewUrlAsync(mediaAssetId, ownerUserId, cancellationToken);
+            return Ok(new CreateViewUrlResponse(viewResult.ViewUrl, viewResult.ExpiresAtUtc));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpDelete("{mediaAssetId:guid}")]
+    public async Task<IActionResult> DeleteMediaAssetAsync(Guid mediaAssetId, CancellationToken cancellationToken)
+    {
+        var ownerUserId = User.GetRequiredUserId();
+        Log.DeleteRequested(_logger, mediaAssetId, ownerUserId);
+        await _privateMediaUrlService.DeleteMediaAssetAsync(mediaAssetId, ownerUserId, cancellationToken);
+        return NoContent();
     }
 
     private async Task<Result<PresignedUploadResult>> CreateUploadResultAsync(
@@ -99,6 +115,9 @@ public sealed partial class MediaController : ControllerBase
 
         [LoggerMessage(Level = LogLevel.Information, Message = "Presigned view URL requested for asset {MediaAssetId} by user {UserId}")]
         internal static partial void ViewUrlRequested(ILogger logger, Guid mediaAssetId, Guid userId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Delete requested for asset {MediaAssetId} by user {UserId}")]
+        internal static partial void DeleteRequested(ILogger logger, Guid mediaAssetId, Guid userId);
     }
 }
 

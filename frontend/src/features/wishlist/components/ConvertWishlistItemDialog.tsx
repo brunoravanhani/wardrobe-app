@@ -79,10 +79,23 @@ export function ConvertWishlistItemDialog({
   }
 
   return (
-    <div className="mb-4 rounded-xl border border-emerald-300 bg-emerald-50/70 p-4" role="dialog" aria-modal="false">
-      <h3 className="mb-3 text-lg font-semibold text-slate-900">Converter para guarda-roupa</h3>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      role="presentation"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-lg rounded-xl border border-stone-200 bg-white p-6 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="convert-dialog-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id="convert-dialog-title" className="mb-4 text-lg font-semibold text-slate-900">
+          Converter para guarda-roupa
+        </h3>
 
-      <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2" aria-label="Formulario de conversao da wishlist">
+        <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2" aria-label="Formulario de conversao da wishlist">
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="convert-name">
           Nome
           <input
@@ -169,7 +182,8 @@ export function ConvertWishlistItemDialog({
             Cancelar
           </button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 using VirtualWardrobe.Application.Common;
+using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Domain.Wardrobe;
 
@@ -31,13 +32,16 @@ public sealed class CreateWardrobeItemCommand
 {
     private readonly IWardrobeItemRepository _wardrobeItemRepository;
     private readonly IMediaAssetRepository _mediaAssetRepository;
+    private readonly IPrivateMediaUrlService _mediaUrlService;
 
     public CreateWardrobeItemCommand(
         IWardrobeItemRepository wardrobeItemRepository,
-        IMediaAssetRepository mediaAssetRepository)
+        IMediaAssetRepository mediaAssetRepository,
+        IPrivateMediaUrlService mediaUrlService)
     {
         _wardrobeItemRepository = wardrobeItemRepository;
         _mediaAssetRepository = mediaAssetRepository;
+        _mediaUrlService = mediaUrlService;
     }
 
     public async Task<Result<WardrobeItem>> CreateAsync(CreateWardrobeItemInput input, CancellationToken cancellationToken)
@@ -89,6 +93,9 @@ public sealed class CreateWardrobeItemCommand
             return Result.Failure<WardrobeItem>(ResultError.NotFound("Wardrobe item was not found."));
         }
 
+        var oldBodyImageId = item.BodyImageAssetId?.Value;
+        var oldCareTagImageId = item.CareTagImageAssetId?.Value;
+
         var mediaValidation = await ValidateMediaOwnershipAsync(
             ownerUserId,
             input.BodyImageAssetId,
@@ -113,6 +120,17 @@ public sealed class CreateWardrobeItemCommand
 
             await _wardrobeItemRepository.UpdateAsync(item, cancellationToken);
             await _wardrobeItemRepository.SaveChangesAsync(cancellationToken);
+
+            if (oldBodyImageId.HasValue && oldBodyImageId != input.BodyImageAssetId)
+            {
+                await _mediaUrlService.DeleteMediaAssetAsync(oldBodyImageId.Value, input.OwnerUserId, cancellationToken);
+            }
+
+            if (oldCareTagImageId.HasValue && oldCareTagImageId != input.CareTagImageAssetId)
+            {
+                await _mediaUrlService.DeleteMediaAssetAsync(oldCareTagImageId.Value, input.OwnerUserId, cancellationToken);
+            }
+
             return Result.Success(item);
         }
         catch (ArgumentException exception)
@@ -129,8 +147,22 @@ public sealed class CreateWardrobeItemCommand
             return Result.Failure(ResultError.NotFound("Wardrobe item was not found."));
         }
 
+        var bodyImageId = item.BodyImageAssetId?.Value;
+        var careTagImageId = item.CareTagImageAssetId?.Value;
+
         await _wardrobeItemRepository.RemoveAsync(item, cancellationToken);
         await _wardrobeItemRepository.SaveChangesAsync(cancellationToken);
+
+        if (bodyImageId.HasValue)
+        {
+            await _mediaUrlService.DeleteMediaAssetAsync(bodyImageId.Value, ownerUserId, cancellationToken);
+        }
+
+        if (careTagImageId.HasValue)
+        {
+            await _mediaUrlService.DeleteMediaAssetAsync(careTagImageId.Value, ownerUserId, cancellationToken);
+        }
+
         return Result.Success();
     }
 
