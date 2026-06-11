@@ -52,6 +52,7 @@ public sealed class WishlistExternalLinkConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.Id).HasColumnName("id");
         builder.Property(x => x.WishlistItemId).HasColumnName("wishlist_item_id").IsRequired();
         builder.Property(x => x.Url).HasColumnName("url").HasMaxLength(2048).IsRequired();
+        builder.Property(x => x.Label).HasColumnName("label").HasMaxLength(80);
         builder.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
 
         builder.HasOne(x => x.WishlistItem)
@@ -114,6 +115,7 @@ public sealed class EfWishlistItemRepository : IWishlistItemRepository
                 Id = link.Id.Value,
                 WishlistItemId = item.Id.Value,
                 Url = link.Url,
+                Label = link.Label,
                 CreatedAtUtc = link.CreatedAtUtc
             }),
             cancellationToken);
@@ -190,6 +192,7 @@ public sealed class EfWishlistItemRepository : IWishlistItemRepository
                 Id = link.Id.Value,
                 WishlistItemId = item.Id.Value,
                 Url = link.Url,
+                Label = link.Label,
                 CreatedAtUtc = link.CreatedAtUtc
             }).ToList()
         };
@@ -202,6 +205,7 @@ public sealed class EfWishlistItemRepository : IWishlistItemRepository
                 new WishlistExternalLinkId(x.Id),
                 new WishlistItemId(x.WishlistItemId),
                 x.Url,
+                x.Label,
                 x.CreatedAtUtc));
 
         return WishlistItem.Rehydrate(

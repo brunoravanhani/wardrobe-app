@@ -10,7 +10,7 @@ test('cria, edita e alterna entre wishlist ativa e historico', async ({ page }) 
     brand: string | null
     targetPrice: number
     inspirationImageAssetId: string | null
-    links: string[]
+    links: Array<{ url: string; label: string | null }>
     status: 'Active' | 'Purchased'
     purchasedAtUtc: string | null
     convertedWardrobeItemId: string | null
@@ -44,7 +44,12 @@ test('cria, edita e alterna entre wishlist ativa e historico', async ({ page }) 
         brand: payload.brand ? String(payload.brand) : null,
         targetPrice: Number(payload.targetPrice),
         inspirationImageAssetId: payload.inspirationImageAssetId ? String(payload.inspirationImageAssetId) : null,
-        links: Array.isArray(payload.links) ? payload.links.map((value) => String(value)) : [],
+        links: Array.isArray(payload.links)
+          ? payload.links.map((value) => ({
+              url: String((value as { url: string }).url ?? value),
+              label: (value as { label?: string | null }).label ?? null,
+            }))
+          : [],
         status: 'Active' as const,
         purchasedAtUtc: null,
         convertedWardrobeItemId: null,
@@ -69,7 +74,12 @@ test('cria, edita e alterna entre wishlist ativa e historico', async ({ page }) 
       target.brand = payload.brand ? String(payload.brand) : null
       target.targetPrice = Number(payload.targetPrice)
       target.inspirationImageAssetId = payload.inspirationImageAssetId ? String(payload.inspirationImageAssetId) : null
-      target.links = Array.isArray(payload.links) ? payload.links.map((value) => String(value)) : []
+      target.links = Array.isArray(payload.links)
+          ? payload.links.map((value) => ({
+              url: String((value as { url: string }).url ?? value),
+              label: (value as { label?: string | null }).label ?? null,
+            }))
+          : []
 
       await route.fulfill({ status: 200, json: target })
       return
@@ -130,7 +140,7 @@ test('cria, edita e alterna entre wishlist ativa e historico', async ({ page }) 
   await page.getByRole('button', { name: 'Novo desejo' }).click()
   await page.getByLabel('Nome do item').fill('Jaqueta Jeans')
   await page.getByLabel('Preco alvo (R$)').fill('299,90')
-  await page.getByLabel('Links externos').fill('https://loja.exemplo/jaqueta')
+  await page.getByLabel('URL do link 1').fill('https://loja.exemplo/jaqueta')
   await page.getByLabel('Imagem de inspiracao (JPG, PNG ou WebP)').setInputFiles({
     name: 'insp.png',
     mimeType: 'image/png',

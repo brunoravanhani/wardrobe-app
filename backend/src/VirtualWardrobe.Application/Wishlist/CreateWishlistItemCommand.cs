@@ -6,6 +6,8 @@ using VirtualWardrobe.Domain.Wishlist;
 
 namespace VirtualWardrobe.Application.Wishlist;
 
+public sealed record WishlistLinkInput(string Url, string? Label);
+
 public sealed record CreateWishlistItemInput(
     Guid OwnerUserId,
     ClothingCategory Category,
@@ -13,7 +15,7 @@ public sealed record CreateWishlistItemInput(
     string? Brand,
     decimal TargetPrice,
     Guid? InspirationImageAssetId,
-    IReadOnlyList<string> Links
+    IReadOnlyList<WishlistLinkInput> Links
 );
 
 public sealed record UpdateWishlistItemInput(
@@ -24,7 +26,7 @@ public sealed record UpdateWishlistItemInput(
     string? Brand,
     decimal TargetPrice,
     Guid? InspirationImageAssetId,
-    IReadOnlyList<string> Links
+    IReadOnlyList<WishlistLinkInput> Links
 );
 
 public sealed class CreateWishlistItemCommand
@@ -63,7 +65,7 @@ public sealed class CreateWishlistItemCommand
                 input.Brand,
                 input.TargetPrice,
                 input.InspirationImageAssetId.HasValue ? new MediaAssetId(input.InspirationImageAssetId.Value) : null,
-                input.Links);
+                input.Links.Select(x => (x.Url, x.Label)));
 
             await _wishlistItemRepository.AddAsync(item, cancellationToken);
             await _wishlistItemRepository.SaveChangesAsync(cancellationToken);
@@ -104,7 +106,7 @@ public sealed class CreateWishlistItemCommand
                 input.Brand,
                 input.TargetPrice,
                 input.InspirationImageAssetId.HasValue ? new MediaAssetId(input.InspirationImageAssetId.Value) : null,
-                input.Links);
+                input.Links.Select(x => (x.Url, x.Label)));
 
             await _wishlistItemRepository.UpdateAsync(item, cancellationToken);
             await _wishlistItemRepository.SaveChangesAsync(cancellationToken);

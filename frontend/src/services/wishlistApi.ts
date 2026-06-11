@@ -6,6 +6,11 @@ import {
 
 export type WishlistItemStatus = 'Active' | 'Purchased'
 
+export type WishlistLink = {
+  url: string
+  label: string | null
+}
+
 export type WishlistItem = {
   id: string
   category: ClothingCategory
@@ -13,7 +18,7 @@ export type WishlistItem = {
   brand: string | null
   targetPrice: number
   inspirationImageAssetId: string | null
-  links: string[]
+  links: WishlistLink[]
   status: WishlistItemStatus
   purchasedAtUtc: string | null
   convertedWardrobeItemId: string | null
@@ -25,7 +30,7 @@ export type UpsertWishlistItemInput = {
   brand?: string | null
   targetPrice: number
   inspirationImageAssetId?: string | null
-  links: string[]
+  links: WishlistLink[]
 }
 
 export type WishlistApiClient = ReturnType<typeof createWishlistApi>

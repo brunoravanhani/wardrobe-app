@@ -10,5 +10,7 @@ public sealed class WishlistExternalLinkRecord
 
     public string Url { get; set; } = string.Empty;
 
+    public string? Label { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
 }

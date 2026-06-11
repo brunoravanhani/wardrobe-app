@@ -35,7 +35,7 @@ public sealed class WishlistConversionContractTests
                 "Marca D",
                 150m,
                 null,
-                ["https://shop.example.com/items/camisa-casual"]),
+                [new WishlistLinkPayload("https://shop.example.com/items/camisa-casual", null)]),
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(createAction.Result);

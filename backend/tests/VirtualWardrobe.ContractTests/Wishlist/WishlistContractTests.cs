@@ -37,11 +37,13 @@ public sealed class WishlistContractTests
                 "Marca",
                 280m,
                 mediaId,
-                ["https://shop.example.com/items/jaqueta"]),
+                [new WishlistLinkPayload("https://shop.example.com/items/jaqueta", "Ver na Loja")]),
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(createAction.Result);
         var createdItem = Assert.IsType<WishlistItemResponse>(created.Value);
+        Assert.Single(createdItem.Links);
+        Assert.Equal("Ver na Loja", createdItem.Links[0].Label);
 
         var updateAction = await controller.UpdateAsync(
             createdItem.Id,
@@ -51,12 +53,13 @@ public sealed class WishlistContractTests
                 "Outra",
                 300m,
                 mediaId,
-                ["https://shop.example.com/items/jaqueta-2"]),
+                [new WishlistLinkPayload("https://shop.example.com/items/jaqueta-2", null)]),
             CancellationToken.None);
 
         var updated = Assert.IsType<OkObjectResult>(updateAction.Result);
         var updatedPayload = Assert.IsType<WishlistItemResponse>(updated.Value);
         Assert.Equal("Jaqueta inverno", updatedPayload.Name);
+        Assert.Null(updatedPayload.Links[0].Label);
 
         var listAction = await controller.ListAsync(false, CancellationToken.None);
         var listed = Assert.IsType<OkObjectResult>(listAction.Result);

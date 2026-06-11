@@ -16,11 +16,12 @@ public sealed class WishlistValidationTests
             "Marca X",
             399.90m,
             null,
-            ["https://loja.exemplo.com/tenis"]);
+            [("https://loja.exemplo.com/tenis", "Ver na Loja")]);
 
         Assert.Equal(ClothingCategory.Shoes, item.Category);
         Assert.Equal(399.90m, item.TargetPrice);
         Assert.Single(item.ExternalLinks);
+        Assert.Equal("Ver na Loja", item.ExternalLinks[0].Label);
     }
 
     [Fact]
@@ -51,7 +52,7 @@ public sealed class WishlistValidationTests
             null,
             100m,
             null,
-            ["notaurl"]);
+            [("notaurl", null)]);
 
         Assert.Throws<ArgumentException>(action);
     }
@@ -67,7 +68,72 @@ public sealed class WishlistValidationTests
             null,
             100m,
             null,
-            ["https://a.com/p/1", "https://a.com/p/1"]);
+            [("https://a.com/p/1", null), ("https://a.com/p/1", null)]);
+
+        Assert.Throws<ArgumentException>(action);
+    }
+
+    [Fact]
+    public void WishlistLinkLabelShouldBeTrimmed()
+    {
+        var link = WishlistExternalLink.Create(
+            WishlistExternalLinkId.New(),
+            WishlistItemId.New(),
+            "https://loja.exemplo/item",
+            "  Ver na Loja  ");
+
+        Assert.Equal("Ver na Loja", link.Label);
+    }
+
+    [Fact]
+    public void WishlistLinkEmptyLabelShouldBeNull()
+    {
+        var link = WishlistExternalLink.Create(
+            WishlistExternalLinkId.New(),
+            WishlistItemId.New(),
+            "https://loja.exemplo/item",
+            "   ");
+
+        Assert.Null(link.Label);
+    }
+
+    [Fact]
+    public void WishlistLinkLabelOver80CharsShouldThrow()
+    {
+        var longLabel = new string('a', 81);
+        var action = () => WishlistExternalLink.Create(
+            WishlistExternalLinkId.New(),
+            WishlistItemId.New(),
+            "https://loja.exemplo/item",
+            longLabel);
+
+        Assert.Throws<ArgumentException>(action);
+    }
+
+    [Fact]
+    public void WishlistLinkLabelNullShouldBeAccepted()
+    {
+        var link = WishlistExternalLink.Create(
+            WishlistExternalLinkId.New(),
+            WishlistItemId.New(),
+            "https://loja.exemplo/item",
+            null);
+
+        Assert.Null(link.Label);
+    }
+
+    [Fact]
+    public void DuplicateUrlWithDifferentLabelsShouldThrow()
+    {
+        var action = () => WishlistItem.Create(
+            WishlistItemId.New(),
+            UserId.New(),
+            ClothingCategory.Shirt,
+            "Camisa",
+            null,
+            100m,
+            null,
+            [("https://a.com/p/1", "Label A"), ("https://a.com/p/1", "Label B")]);
 
         Assert.Throws<ArgumentException>(action);
     }

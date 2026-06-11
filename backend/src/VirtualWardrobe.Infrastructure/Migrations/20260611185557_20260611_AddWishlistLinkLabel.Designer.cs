@@ -2,18 +2,22 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VirtualWardrobe.Infrastructure.Persistence;
 
 #nullable disable
+#pragma warning disable CA1707
 
 namespace VirtualWardrobe.Infrastructure.Migrations
 {
     [DbContext(typeof(VirtualWardrobeDbContext))]
-    partial class VirtualWardrobeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260611185557_20260611_AddWishlistLinkLabel")]
+    partial class _20260611_AddWishlistLinkLabel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

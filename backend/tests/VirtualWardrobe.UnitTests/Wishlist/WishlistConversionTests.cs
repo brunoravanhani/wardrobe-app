@@ -20,7 +20,7 @@ public sealed class WishlistConversionTests
             "Marca X",
             199.90m,
             null,
-            ["https://shop.example.com/items/1"]);
+            [("https://shop.example.com/items/1", null)]);
 
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
@@ -46,7 +46,7 @@ public sealed class WishlistConversionTests
             "Marca A",
             320m,
             null,
-            ["https://shop.example.com/items/2"]);
+            [("https://shop.example.com/items/2", null)]);
         item.MarkAsPurchased();
 
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
@@ -83,7 +83,7 @@ public sealed class WishlistConversionTests
             "Marca B",
             410m,
             null,
-            ["https://shop.example.com/items/3"]);
+            [("https://shop.example.com/items/3", null)]);
         item.MarkAsPurchased();
 
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
