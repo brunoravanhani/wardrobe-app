@@ -95,7 +95,7 @@ export function ConvertWishlistItemDialog({
           Converter para guarda-roupa
         </h3>
 
-        <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2" aria-label="Formulario de conversao da wishlist">
+        <form onSubmit={handleSubmit} noValidate className="grid gap-3 md:grid-cols-2" aria-label="Formulario de conversao da wishlist">
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="convert-name">
           Nome
           <input

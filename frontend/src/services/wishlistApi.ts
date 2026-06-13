@@ -121,12 +121,6 @@ export function createWishlistApi(options: WishlistApiClientOptions) {
       })
     },
 
-    markAsPurchased(itemId: string) {
-      return requestJson<WishlistItem>(`/v1/wishlist-items/${itemId}/mark-purchased`, {
-        method: 'POST',
-      })
-    },
-
     convertToWardrobe(itemId: string, input: ConvertWishlistItemInput) {
       return requestJson<WishlistConversionResult>(`/v1/wishlist-items/${itemId}/convert`, {
         method: 'POST',

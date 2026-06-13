@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuthSession } from '../../app/providers/auth-context'
 import {
   createWishlistApi,
@@ -131,16 +132,6 @@ export function WishlistPage() {
       setSubmitError(message)
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  async function handleMarkAsPurchased(item: WishlistItem) {
-    try {
-      await api.markAsPurchased(item.id)
-      await loadItems()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel atualizar o status do item.'
-      setErrorMessage(message)
     }
   }
 
@@ -309,19 +300,7 @@ export function WishlistPage() {
               ) : null}
 
               <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                {item.status === 'Active' ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleMarkAsPurchased(item)
-                    }}
-                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
-                  >
-                    Marcar como comprado
-                  </button>
-                ) : null}
-
-                {item.status === 'Purchased' && !item.convertedWardrobeItemId ? (
+                {!item.convertedWardrobeItemId ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -333,6 +312,15 @@ export function WishlistPage() {
                   >
                     Converter para guarda-roupa
                   </button>
+                ) : null}
+
+                {item.convertedWardrobeItemId ? (
+                  <Link
+                    to="/"
+                    className="rounded-md bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800"
+                  >
+                    Ver no Guarda-Roupa
+                  </Link>
                 ) : null}
 
                 <button

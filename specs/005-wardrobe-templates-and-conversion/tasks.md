@@ -48,41 +48,42 @@ marks the wishlist item as purchased and creates the wardrobe item.
 
 ---
 
-## Phase 2 — Story A Frontend: Conversion Dialog
+## Phase 2 — Story A Frontend: Conversion Dialog ✓
 
 **Goal**: Single "Converter para Guarda-Roupa" button on wishlist cards that
 opens a pre-filled confirmation dialog; "Ver no Guarda-Roupa" link in history.
 
 ### Tests (write first)
 
-- [ ] T007 [US-A-FE] Unit test — `ConvertWishlistItemDialog` renders with
+- [x] T007 [US-A-FE] Unit test — `ConvertWishlistItemDialog` renders with
   wishlist-mapped default values, shows validation errors for missing required
-  fields, and calls the API on submit
+  fields, and calls the API on submit (4 tests, all passing)
   `tests/unit/wishlist/ConvertWishlistItemDialog.test.tsx`
 
-- [ ] T008 [US-A-FE] e2e test — full convert flow: open dialog, fill missing
+- [x] T008 [US-A-FE] e2e test — full convert flow: open dialog, fill missing
   field, confirm → wardrobe item appears, wishlist item moves to history with
   "Ver no Guarda-Roupa" link
   `tests/e2e/wishlist-conversion.spec.ts`
 
 ### Implementation
 
-- [ ] T009 [US-A-FE] Service: add `convertWishlistItem(id, payload)` to
-  `frontend/src/services/wishlistApi.ts` calling
+- [x] T009 [US-A-FE] Service: removed `markAsPurchased` (deleted endpoint);
+  `convertToWardrobe(id, payload)` already present calling
   `POST /v1/wishlist-items/{id}/convert`
+  `frontend/src/services/wishlistApi.ts`
 
-- [ ] T010 [US-A-FE] Component: `ConvertWishlistItemDialog` — pre-fills
+- [x] T010 [US-A-FE] Component: `ConvertWishlistItemDialog` — pre-fills
   category, name, brand, target price → price from the wishlist item; prompts
-  for size and body image if missing; inline validation on required fields
+  for size; inline validation on required fields; `noValidate` added to form
   `frontend/src/features/wishlist/components/ConvertWishlistItemDialog.tsx`
 
-- [ ] T011 [US-A-FE] Wishlist card: replace the two-step purchased/convert
-  buttons with a single "Converter para Guarda-Roupa" button that opens
-  `ConvertWishlistItemDialog`
-  `frontend/src/features/wishlist/components/WishlistItemCard.tsx`
+- [x] T011 [US-A-FE] Wishlist card: replaced the two-step purchased/convert
+  buttons with a single "Converter para guarda-roupa" button shown when
+  `!item.convertedWardrobeItemId`; removed `handleMarkAsPurchased`
+  `frontend/src/features/wishlist/WishlistPage.tsx`
 
-- [ ] T012 [US-A-FE] Wishlist history: for items with a `wardrobeItemId`,
-  render a "Ver no Guarda-Roupa" link that navigates to the wardrobe item
+- [x] T012 [US-A-FE] Wishlist history: for items with `convertedWardrobeItemId`,
+  renders a "Ver no Guarda-Roupa" `<Link to="/">` navigating to the wardrobe page
   `frontend/src/features/wishlist/WishlistPage.tsx`
 
 ---
