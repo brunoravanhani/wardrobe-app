@@ -72,6 +72,16 @@ test('cria, edita e filtra pecas do guarda-roupa', async ({ page }) => {
       return
     }
 
+    if (endpoint === '/v1/wardrobe-templates' && method === 'GET') {
+      await route.fulfill({ status: 200, json: [] })
+      return
+    }
+
+    if (endpoint === '/v1/wardrobe-templates/slots' && method === 'GET') {
+      await route.fulfill({ status: 200, json: { activeTemplateId: null, slots: [] } })
+      return
+    }
+
     if (endpoint === '/v1/media/upload-url' && method === 'POST') {
       const payload = (await request.postDataJSON()) as {
         fileName: string

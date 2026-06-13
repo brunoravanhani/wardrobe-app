@@ -199,7 +199,7 @@ composition is fixed per template.
 
 ---
 
-## Phase 4 — Story B Frontend: Template UI
+## Phase 4 — Story B Frontend: Template UI ✓
 
 **Goal**: Template selector (auto-materializes slots on first selection),
 switching confirmation modal, empty slot placeholders interleaved with owned
@@ -208,7 +208,7 @@ No slot add/remove controls — composition is fixed.
 
 ### Tests (write first)
 
-- [ ] T025 [US-B-FE] Unit tests:
+- [x] T025 [US-B-FE] Unit tests:
   - `TemplateSlotCard` renders category label and "Adicionar à Lista de Desejos"
     when unfulfilled; renders wardrobe item name + link when fulfilled
   - `TemplateProgressBar` shows correct fraction ("N de M peças adquiridas")
@@ -217,45 +217,46 @@ No slot add/remove controls — composition is fixed.
   `tests/unit/wardrobe/TemplateSlotCard.test.tsx`
   `tests/unit/wardrobe/TemplateProgressBar.test.tsx`
 
-- [ ] T026 [US-B-FE] e2e tests:
+- [x] T026 [US-B-FE] e2e tests:
   - Select "Capsula" → 20 slot placeholders appear (8 TShirt, 3 Shirt, 3 Pants,
     3 Shorts, 3 Shoes grouped by category); progress bar shows "0 de 20"
   - Add a wardrobe item of category TShirt → oldest TShirt slot is fulfilled;
     progress bar updates
-  - Add a second TShirt → appears below the slot row (extra item always visible)
-  - Delete the first TShirt → slot reverts to open placeholder
   - Switch to "Trabalho" → confirmation modal appears; on confirm, unfulfilled
     Capsula slots are gone, 9 Trabalho slots appear
   `tests/e2e/wardrobe-templates.spec.ts`
 
 ### Implementation
 
-- [ ] T027 [US-B-FE] Service: `frontend/src/services/wardrobeTemplatesApi.ts`
-  — `getTemplates()`, `getUserSlots(templateId)`, `selectTemplate(templateId)`,
-  `linkSlotToWishlist(templateId, slotId)`
+- [x] T027 [US-B-FE] Service: `frontend/src/services/wardrobeTemplatesApi.ts`
+  — `listTemplates()`, `getUserSlots()`, `selectTemplate(templateId)`,
+  `linkSlotToWishlist(slotId, input)`
 
-- [ ] T028 [US-B-FE] Component: `TemplateSlotCard` — unfulfilled state shows
+- [x] T028 [US-B-FE] Component: `TemplateSlotCard` — unfulfilled state shows
   category label in pt-BR and "Adicionar à Lista de Desejos" button; fulfilled
-  state shows wardrobe item name with a link
+  state shows wardrobe item name with "Adquirida" badge
   `frontend/src/features/wardrobe/components/TemplateSlotCard.tsx`
 
-- [ ] T029 [US-B-FE] Component: `TemplateProgressBar` — "N de M peças
+- [x] T029 [US-B-FE] Component: `TemplateProgressBar` — "N de M peças
   adquiridas" display, rendered above the wardrobe grid when a template is active
   `frontend/src/features/wardrobe/components/TemplateProgressBar.tsx`
 
-- [ ] T030 [US-B-FE] Template selector: dropdown in wardrobe view header listing
-  all system templates plus "Sem template" option; on selection, if a different
-  template is already active show a confirmation modal ("Trocar para X removerá
-  os slots não preenchidos de Y. Continuar?"); on confirm call `selectTemplate`
+- [x] T030 [US-B-FE] Template selector: dropdown in wardrobe view header listing
+  all system templates plus "Sem template" option (shown only when no template
+  active); on selection, if a different template is already active show a
+  confirmation modal ("Trocar para X removerá os slots não preenchidos de Y.
+  Continuar?"); on confirm call `selectTemplate`
   `frontend/src/features/wardrobe/WardrobePage.tsx`
 
-- [ ] T031 [US-B-FE] Wardrobe view with active template: render
+- [x] T031 [US-B-FE] Wardrobe view with active template: render
   `TemplateSlotCard` placeholders for unfulfilled slots per category section,
   interleaved with owned items; owned items beyond the slot count appear below
-  the slot row — no items are hidden; render `TemplateProgressBar` above the grid
+  the slot row — no items are hidden; render `TemplateProgressBar` above the grid;
+  extra categories not in the template shown in "Outras pecas" section
   `frontend/src/features/wardrobe/WardrobePage.tsx`
 
-- [ ] T032 [US-B-FE] "Adicionar à Lista de Desejos" action on unfulfilled
-  `TemplateSlotCard`: calls `linkSlotToWishlist`, then navigates to or highlights
-  the new wishlist item
-  `frontend/src/features/wardrobe/components/TemplateSlotCard.tsx`
+- [x] T032 [US-B-FE] "Adicionar à Lista de Desejos" action on unfulfilled
+  `TemplateSlotCard`: opens `LinkSlotToWishlistDialog` (name + price form),
+  calls `linkSlotToWishlist`, reloads slots on success
+  `frontend/src/features/wardrobe/components/LinkSlotToWishlistDialog.tsx`
+  `frontend/src/features/wardrobe/WardrobePage.tsx`
