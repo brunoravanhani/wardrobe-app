@@ -34,22 +34,7 @@ public sealed class ConvertWishlistItemCommand
         _mediaAssetRepository = mediaAssetRepository;
     }
 
-    public async Task<Result<WishlistItem>> MarkAsPurchasedAsync(Guid itemId, Guid ownerUserId, CancellationToken cancellationToken)
-    {
-        var item = await _wishlistItemRepository.GetByIdAsync(new WishlistItemId(itemId), new UserId(ownerUserId), cancellationToken);
-        if (item is null)
-        {
-            return Result.Failure<WishlistItem>(ResultError.NotFound("Wishlist item was not found."));
-        }
-
-        item.MarkAsPurchased();
-        await _wishlistItemRepository.UpdateAsync(item, cancellationToken);
-        await _wishlistItemRepository.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(item);
-    }
-
-    public async Task<Result<WardrobeItem>> ConvertToWardrobeAsync(ConvertWishlistItemInput input, CancellationToken cancellationToken)
+    public async Task<Result<WardrobeItem>> CombinedConvertAsync(ConvertWishlistItemInput input, CancellationToken cancellationToken)
     {
         var ownerUserId = new UserId(input.OwnerUserId);
         var wishlistItem = await _wishlistItemRepository.GetByIdAsync(new WishlistItemId(input.ItemId), ownerUserId, cancellationToken);
@@ -57,11 +42,6 @@ public sealed class ConvertWishlistItemCommand
         if (wishlistItem is null)
         {
             return Result.Failure<WardrobeItem>(ResultError.NotFound("Wishlist item was not found."));
-        }
-
-        if (wishlistItem.Status != WishlistItemStatus.Purchased)
-        {
-            return Result.Failure<WardrobeItem>(ResultError.Validation("Wishlist item must be marked as purchased before conversion."));
         }
 
         if (wishlistItem.ConvertedWardrobeItemId.HasValue)
@@ -96,10 +76,13 @@ public sealed class ConvertWishlistItemCommand
 
         try
         {
+            if (wishlistItem.Status == WishlistItemStatus.Active)
+            {
+                wishlistItem.ConvertToWardrobe();
+            }
+
             var wardrobeItem = WardrobeItem.Create(
-                wishlistItem.ConvertedWardrobeItemId.HasValue
-                    ? new WardrobeItemId(wishlistItem.ConvertedWardrobeItemId.Value)
-                    : WardrobeItemId.New(),
+                WardrobeItemId.New(),
                 ownerUserId,
                 input.Category ?? wishlistItem.Category,
                 string.IsNullOrWhiteSpace(input.Name) ? wishlistItem.Name : input.Name,

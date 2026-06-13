@@ -137,4 +137,44 @@ public sealed class WishlistValidationTests
 
         Assert.Throws<ArgumentException>(action);
     }
+
+    [Fact]
+    public void ConvertToWardrobeOnActiveItemSetsStatusToPurchasedAndReturnsCreationData()
+    {
+        var item = WishlistItem.Create(
+            WishlistItemId.New(),
+            UserId.New(),
+            ClothingCategory.Shirt,
+            "Camisa casual",
+            "Marca E",
+            150m,
+            null);
+
+        var data = item.ConvertToWardrobe();
+
+        Assert.Equal(WishlistItemStatus.Purchased, item.Status);
+        Assert.NotNull(item.PurchasedAtUtc);
+        Assert.Equal(ClothingCategory.Shirt, data.Category);
+        Assert.Equal("Camisa casual", data.Name);
+        Assert.Equal("Marca E", data.Brand);
+        Assert.Equal(150m, data.TargetPrice);
+    }
+
+    [Fact]
+    public void ConvertToWardrobeOnPurchasedItemThrowsArgumentException()
+    {
+        var item = WishlistItem.Create(
+            WishlistItemId.New(),
+            UserId.New(),
+            ClothingCategory.Pants,
+            "Calça jeans",
+            null,
+            200m,
+            null);
+        item.MarkAsPurchased();
+
+        var action = () => item.ConvertToWardrobe();
+
+        Assert.Throws<ArgumentException>(action);
+    }
 }

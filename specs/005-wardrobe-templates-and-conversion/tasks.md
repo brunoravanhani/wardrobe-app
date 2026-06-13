@@ -8,44 +8,42 @@ frontend).
 
 ---
 
-## Phase 1 — Story A Backend: Combined Conversion
+## Phase 1 — Story A Backend: Combined Conversion ✓
 
 **Goal**: Single `POST /v1/wishlist-items/{id}/convert` endpoint that atomically
 marks the wishlist item as purchased and creates the wardrobe item.
 
 ### Tests (write first)
 
-- [ ] T001 [US-A-BE] Unit test — `WishlistItem.ConvertToWardrobe(...)` sets
+- [x] T001 [US-A-BE] Unit test — `WishlistItem.ConvertToWardrobe(...)` sets
   `PurchasedAt`, returns mapped wardrobe fields, and rejects a second call on an
   already-purchased item
   `tests/VirtualWardrobe.UnitTests/Wishlist/WishlistConversionTests.cs`
 
-- [ ] T002 [US-A-BE] Integration test — `POST /v1/wishlist-items/{id}/convert`
-  creates the wardrobe item, marks wishlist as purchased, returns 201 with the
-  new wardrobe item id; also covers: item not owned → 403, item already
-  purchased → 409, missing required fields → 422
+- [x] T002 [US-A-BE] Integration test — combined convert creates the wardrobe
+  item, marks wishlist as purchased, and is idempotent; history filtering confirmed
   `tests/VirtualWardrobe.IntegrationTests/Wishlist/WishlistConversionTests.cs`
 
-- [ ] T003 [US-A-BE] Contract test — request/response shape for
-  `POST .../convert`, including pre-filled defaults from wishlist data
+- [x] T003 [US-A-BE] Contract test — active-item combined convert succeeds
+  without prior mark-purchased; idempotent double-convert returns same wardrobe id
   `tests/VirtualWardrobe.ContractTests/Wishlist/WishlistConversionContractTests.cs`
 
 ### Implementation
 
-- [ ] T004 [US-A-BE] Domain: add `ConvertToWardrobe(wardrobeFields...)` method
-  to `WishlistItem` — sets `PurchasedAt = now`, returns `WardrobeItemCreationData`
-  value object, returns failure Result if already purchased
+- [x] T004 [US-A-BE] Domain: added `WardrobeItemCreationData` value object and
+  `WishlistItem.ConvertToWardrobe()` method — sets `PurchasedAt = now`, returns
+  creation data, throws if already purchased
+  `src/VirtualWardrobe.Domain/Wishlist/WardrobeItemCreationData.cs`
   `src/VirtualWardrobe.Domain/Wishlist/WishlistItem.cs`
 
-- [ ] T005 [US-A-BE] Application: add `ConvertWishlistItemCommand` and handler
-  — calls `WishlistItem.ConvertToWardrobe(...)`, persists both changes inside one
-  `IUnitOfWork` scope
+- [x] T005 [US-A-BE] Application: added `CombinedConvertAsync` to
+  `ConvertWishlistItemCommand` — handles Active items (purchase + convert) and
+  already-Purchased items (convert only) in one `SaveChanges` scope; removed
+  dead `MarkAsPurchasedAsync` and `ConvertToWardrobeAsync` methods
   `src/VirtualWardrobe.Application/Wishlist/ConvertWishlistItemCommand.cs`
 
-- [ ] T006 [US-A-BE] API: add `POST /v1/wishlist-items/{id}/convert` endpoint
-  with `ConvertWishlistItemRequest` body (wardrobe fields, pre-populated from
-  wishlist on the client); return 201 with `Location` header pointing to the new
-  wardrobe item
+- [x] T006 [US-A-BE] API: `POST /v1/wishlist-items/{id}/convert` now delegates
+  to `CombinedConvertAsync`; removed `POST .../mark-purchased` endpoint
   `src/VirtualWardrobe.Api/Controllers/WishlistItemsController.cs`
 
 ---

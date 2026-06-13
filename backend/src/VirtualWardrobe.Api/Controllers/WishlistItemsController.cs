@@ -120,14 +120,6 @@ public sealed partial class WishlistItemsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("{itemId:guid}/mark-purchased")]
-    public async Task<ActionResult<WishlistItemResponse>> MarkAsPurchasedAsync(Guid itemId, CancellationToken cancellationToken)
-    {
-        var ownerUserId = User.GetRequiredUserId();
-        var result = await _convertWishlistItemCommand.MarkAsPurchasedAsync(itemId, ownerUserId, cancellationToken);
-        return ToActionResult(result, StatusCodes.Status200OK);
-    }
-
     [HttpPost("{itemId:guid}/convert")]
     public async Task<ActionResult<WishlistConversionResponse>> ConvertToWardrobeAsync(
         Guid itemId,
@@ -152,7 +144,7 @@ public sealed partial class WishlistItemsController : ControllerBase
         var ownerUserId = User.GetRequiredUserId();
         Log.ConversionInitiated(_logger, itemId, ownerUserId);
 
-        var result = await _convertWishlistItemCommand.ConvertToWardrobeAsync(
+        var result = await _convertWishlistItemCommand.CombinedConvertAsync(
             new ConvertWishlistItemInput(
                 itemId,
                 ownerUserId,

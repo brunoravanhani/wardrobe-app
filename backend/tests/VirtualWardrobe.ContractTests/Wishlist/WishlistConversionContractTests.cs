@@ -15,7 +15,52 @@ namespace VirtualWardrobe.ContractTests.Wishlist;
 public sealed class WishlistConversionContractTests
 {
     [Fact]
-    public async Task PurchaseAndConvertContractShouldReturnIdempotentWardrobeItem()
+    public async Task CombinedConvertActiveItemShouldSucceedWithoutPriorPurchase()
+    {
+        var ownerUserId = Guid.NewGuid();
+
+        var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId);
+        var wishlistRepository = new InMemoryWishlistItemRepository();
+        var wardrobeRepository = new InMemoryWardrobeItemRepository();
+        var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository, new NoOpMediaUrlService());
+        var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+
+        var controller = new WishlistItemsController(wishlistCommand, conversionCommand, NullLogger<WishlistItemsController>.Instance);
+        AttachUser(controller, ownerUserId);
+
+        var createAction = await controller.CreateAsync(
+            new CreateWishlistItemRequest(
+                "TShirt",
+                "Camiseta básica",
+                null,
+                89.90m,
+                null,
+                null),
+            CancellationToken.None);
+
+        var created = Assert.IsType<CreatedAtActionResult>(createAction.Result);
+        var createdItem = Assert.IsType<WishlistItemResponse>(created.Value);
+        Assert.Equal(WishlistItemStatus.Active, createdItem.Status);
+
+        var convertAction = await controller.ConvertToWardrobeAsync(
+            createdItem.Id,
+            new ConvertWishlistItemRequest(null, null, "M", null, null, null, null),
+            CancellationToken.None);
+
+        var convertedResult = Assert.IsType<OkObjectResult>(convertAction.Result);
+        var convertedPayload = Assert.IsType<WishlistConversionResponse>(convertedResult.Value);
+
+        Assert.Equal(createdItem.Id, convertedPayload.WishlistItemId);
+        Assert.NotEqual(Guid.Empty, convertedPayload.WardrobeItem.Id);
+
+        var listAction = await controller.ListAsync(includePurchased: false, CancellationToken.None);
+        var activeItems = Assert.IsType<OkObjectResult>(listAction.Result);
+        var activeList = Assert.IsAssignableFrom<IReadOnlyList<WishlistItemResponse>>(activeItems.Value);
+        Assert.Empty(activeList);
+    }
+
+    [Fact]
+    public async Task ConvertContractShouldReturnIdempotentWardrobeItem()
     {
         var ownerUserId = Guid.NewGuid();
 
@@ -41,33 +86,14 @@ public sealed class WishlistConversionContractTests
         var created = Assert.IsType<CreatedAtActionResult>(createAction.Result);
         var createdItem = Assert.IsType<WishlistItemResponse>(created.Value);
 
-        var purchaseAction = await controller.MarkAsPurchasedAsync(createdItem.Id, CancellationToken.None);
-        var purchased = Assert.IsType<OkObjectResult>(purchaseAction.Result);
-        var purchasedPayload = Assert.IsType<WishlistItemResponse>(purchased.Value);
-        Assert.Equal(WishlistItemStatus.Purchased, purchasedPayload.Status);
-
         var firstConvert = await controller.ConvertToWardrobeAsync(
             createdItem.Id,
-            new ConvertWishlistItemRequest(
-                null,
-                null,
-                "M",
-                null,
-                null,
-                null,
-                null),
+            new ConvertWishlistItemRequest(null, null, "M", null, null, null, null),
             CancellationToken.None);
 
         var secondConvert = await controller.ConvertToWardrobeAsync(
             createdItem.Id,
-            new ConvertWishlistItemRequest(
-                null,
-                null,
-                "M",
-                null,
-                null,
-                null,
-                null),
+            new ConvertWishlistItemRequest(null, null, "M", null, null, null, null),
             CancellationToken.None);
 
         var firstConvertedResult = Assert.IsType<OkObjectResult>(firstConvert.Result);
