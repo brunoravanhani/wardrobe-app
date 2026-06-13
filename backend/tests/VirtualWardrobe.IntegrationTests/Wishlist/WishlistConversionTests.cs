@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
@@ -133,7 +134,9 @@ public sealed class WishlistConversionTests
         var wishlistRepository = new EfWishlistItemRepository(dbContext);
         var wardrobeRepository = new EfWardrobeItemRepository(dbContext);
         var mediaRepository = new EfMediaAssetRepository(dbContext);
-        return new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var slotRepository = new EfTemplateSlotRepository(dbContext);
+        var fulfillmentService = new TemplateSlotFulfillmentService(slotRepository);
+        return new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, fulfillmentService);
     }
 
     private static VirtualWardrobeDbContext CreateDbContext()

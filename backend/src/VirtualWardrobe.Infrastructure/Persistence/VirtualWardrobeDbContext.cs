@@ -22,6 +22,12 @@ public sealed class VirtualWardrobeDbContext : DbContext
 
     public DbSet<WishlistExternalLinkRecord> WishlistExternalLinks => Set<WishlistExternalLinkRecord>();
 
+    public DbSet<WardrobeTemplateRecord> WardrobeTemplates => Set<WardrobeTemplateRecord>();
+
+    public DbSet<TemplateSlotDefinitionRecord> TemplateSlotDefinitions => Set<TemplateSlotDefinitionRecord>();
+
+    public DbSet<TemplateSlotRecord> TemplateSlots => Set<TemplateSlotRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

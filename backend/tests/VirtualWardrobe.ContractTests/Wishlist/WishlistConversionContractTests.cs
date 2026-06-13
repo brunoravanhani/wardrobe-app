@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using VirtualWardrobe.Api.Controllers;
 using VirtualWardrobe.Application.Storage;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
+using VirtualWardrobe.Domain.Templates;
 using VirtualWardrobe.Domain.Wardrobe;
 using VirtualWardrobe.Domain.Wishlist;
 
@@ -23,7 +25,8 @@ public sealed class WishlistConversionContractTests
         var wishlistRepository = new InMemoryWishlistItemRepository();
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository, new NoOpMediaUrlService());
-        var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var fulfillmentService = new TemplateSlotFulfillmentService(new NoOpTemplateSlotRepository());
+        var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, fulfillmentService);
 
         var controller = new WishlistItemsController(wishlistCommand, conversionCommand, NullLogger<WishlistItemsController>.Instance);
         AttachUser(controller, ownerUserId);
@@ -68,7 +71,8 @@ public sealed class WishlistConversionContractTests
         var wishlistRepository = new InMemoryWishlistItemRepository();
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var wishlistCommand = new CreateWishlistItemCommand(wishlistRepository, mediaRepository, new NoOpMediaUrlService());
-        var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var fulfillmentService2 = new TemplateSlotFulfillmentService(new NoOpTemplateSlotRepository());
+        var conversionCommand = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, fulfillmentService2);
 
         var controller = new WishlistItemsController(wishlistCommand, conversionCommand, NullLogger<WishlistItemsController>.Instance);
         AttachUser(controller, ownerUserId);
@@ -235,6 +239,18 @@ public sealed class WishlistConversionContractTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class NoOpTemplateSlotRepository : ITemplateSlotRepository
+    {
+        public Task AddRangeAsync(IEnumerable<TemplateSlot> slots, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UpdateAsync(TemplateSlot slot, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<TemplateSlot?> GetByIdAsync(TemplateSlotId slotId, UserId ownerUserId, CancellationToken cancellationToken) => Task.FromResult<TemplateSlot?>(null);
+        public Task<TemplateSlot?> GetByWardrobeItemIdAsync(WardrobeItemId wardrobeItemId, CancellationToken cancellationToken) => Task.FromResult<TemplateSlot?>(null);
+        public Task<IReadOnlyList<TemplateSlot>> ListByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TemplateSlot>>(Array.Empty<TemplateSlot>());
+        public Task<IReadOnlyList<TemplateSlot>> ListOpenByUserAndCategoryAsync(UserId userId, ClothingCategory category, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TemplateSlot>>(Array.Empty<TemplateSlot>());
+        public Task DeleteUnfulfilledByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class NoOpMediaUrlService : IPrivateMediaUrlService

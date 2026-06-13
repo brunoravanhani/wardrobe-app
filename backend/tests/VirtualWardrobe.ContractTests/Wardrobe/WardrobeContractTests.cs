@@ -8,6 +8,7 @@ using VirtualWardrobe.Application.Common;
 using VirtualWardrobe.Application.Storage;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
+using VirtualWardrobe.Domain.Templates;
 using VirtualWardrobe.Domain.Wardrobe;
 
 namespace VirtualWardrobe.ContractTests.Wardrobe;
@@ -48,7 +49,8 @@ public sealed class WardrobeContractTests
 
         var mediaRepository = new InMemoryMediaAssetRepository(ownerUserId, mediaId);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
-        var command = new CreateWardrobeItemCommand(wardrobeRepository, mediaRepository, new FakePrivateMediaUrlService());
+        var fulfillmentService = new VirtualWardrobe.Application.Templates.TemplateSlotFulfillmentService(new NoOpTemplateSlotRepository());
+        var command = new CreateWardrobeItemCommand(wardrobeRepository, mediaRepository, new FakePrivateMediaUrlService(), fulfillmentService);
 
         var controller = new WardrobeItemsController(command);
         AttachUser(controller, ownerUserId);
@@ -207,6 +209,18 @@ public sealed class WardrobeContractTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class NoOpTemplateSlotRepository : VirtualWardrobe.Application.Templates.ITemplateSlotRepository
+    {
+        public Task AddRangeAsync(IEnumerable<VirtualWardrobe.Domain.Templates.TemplateSlot> slots, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UpdateAsync(VirtualWardrobe.Domain.Templates.TemplateSlot slot, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VirtualWardrobe.Domain.Templates.TemplateSlot?> GetByIdAsync(TemplateSlotId slotId, UserId ownerUserId, CancellationToken cancellationToken) => Task.FromResult<VirtualWardrobe.Domain.Templates.TemplateSlot?>(null);
+        public Task<VirtualWardrobe.Domain.Templates.TemplateSlot?> GetByWardrobeItemIdAsync(WardrobeItemId wardrobeItemId, CancellationToken cancellationToken) => Task.FromResult<VirtualWardrobe.Domain.Templates.TemplateSlot?>(null);
+        public Task<IReadOnlyList<VirtualWardrobe.Domain.Templates.TemplateSlot>> ListByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VirtualWardrobe.Domain.Templates.TemplateSlot>>(Array.Empty<VirtualWardrobe.Domain.Templates.TemplateSlot>());
+        public Task<IReadOnlyList<VirtualWardrobe.Domain.Templates.TemplateSlot>> ListOpenByUserAndCategoryAsync(UserId userId, ClothingCategory category, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VirtualWardrobe.Domain.Templates.TemplateSlot>>(Array.Empty<VirtualWardrobe.Domain.Templates.TemplateSlot>());
+        public Task DeleteUnfulfilledByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class FakePrivateMediaUrlService : IPrivateMediaUrlService

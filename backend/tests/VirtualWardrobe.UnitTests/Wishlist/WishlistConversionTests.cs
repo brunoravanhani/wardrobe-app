@@ -1,6 +1,8 @@
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
+using VirtualWardrobe.Domain.Templates;
 using VirtualWardrobe.Domain.Wardrobe;
 using VirtualWardrobe.Domain.Wishlist;
 
@@ -24,7 +26,7 @@ public sealed class WishlistConversionTests
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
 
         var result = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(
@@ -66,7 +68,7 @@ public sealed class WishlistConversionTests
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
 
         var result = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(
@@ -101,7 +103,7 @@ public sealed class WishlistConversionTests
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
 
         var result = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(
@@ -137,7 +139,7 @@ public sealed class WishlistConversionTests
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
 
         var firstResult = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(item.Id.Value, ownerId, null, null, "40", null, null, null, null),
@@ -276,5 +278,20 @@ public sealed class WishlistConversionTests
         {
             return Task.FromResult(ownerUserId.Value == _owner && _ownedMediaIds.Contains(mediaAssetId.Value));
         }
+    }
+
+    private static TemplateSlotFulfillmentService NoOpFulfillmentService()
+        => new TemplateSlotFulfillmentService(new NoOpTemplateSlotRepository());
+
+    private sealed class NoOpTemplateSlotRepository : ITemplateSlotRepository
+    {
+        public Task AddRangeAsync(IEnumerable<TemplateSlot> slots, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UpdateAsync(TemplateSlot slot, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<TemplateSlot?> GetByIdAsync(TemplateSlotId slotId, UserId ownerUserId, CancellationToken cancellationToken) => Task.FromResult<TemplateSlot?>(null);
+        public Task<TemplateSlot?> GetByWardrobeItemIdAsync(WardrobeItemId wardrobeItemId, CancellationToken cancellationToken) => Task.FromResult<TemplateSlot?>(null);
+        public Task<IReadOnlyList<TemplateSlot>> ListByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TemplateSlot>>(Array.Empty<TemplateSlot>());
+        public Task<IReadOnlyList<TemplateSlot>> ListOpenByUserAndCategoryAsync(UserId userId, ClothingCategory category, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TemplateSlot>>(Array.Empty<TemplateSlot>());
+        public Task DeleteUnfulfilledByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

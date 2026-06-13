@@ -1,4 +1,5 @@
 using VirtualWardrobe.Application.Common;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Domain.Wardrobe;
@@ -23,15 +24,18 @@ public sealed class ConvertWishlistItemCommand
     private readonly IWishlistItemRepository _wishlistItemRepository;
     private readonly IWardrobeItemRepository _wardrobeItemRepository;
     private readonly IMediaAssetRepository _mediaAssetRepository;
+    private readonly TemplateSlotFulfillmentService _fulfillmentService;
 
     public ConvertWishlistItemCommand(
         IWishlistItemRepository wishlistItemRepository,
         IWardrobeItemRepository wardrobeItemRepository,
-        IMediaAssetRepository mediaAssetRepository)
+        IMediaAssetRepository mediaAssetRepository,
+        TemplateSlotFulfillmentService fulfillmentService)
     {
         _wishlistItemRepository = wishlistItemRepository;
         _wardrobeItemRepository = wardrobeItemRepository;
         _mediaAssetRepository = mediaAssetRepository;
+        _fulfillmentService = fulfillmentService;
     }
 
     public async Task<Result<WardrobeItem>> CombinedConvertAsync(ConvertWishlistItemInput input, CancellationToken cancellationToken)
@@ -93,6 +97,7 @@ public sealed class ConvertWishlistItemCommand
                 input.CareTagImageAssetId.HasValue ? new MediaAssetId(input.CareTagImageAssetId.Value) : null);
 
             await _wardrobeItemRepository.AddAsync(wardrobeItem, cancellationToken);
+            await _fulfillmentService.TryFulfillAsync(ownerUserId, wardrobeItem, cancellationToken);
 
             wishlistItem.MarkAsConverted(wardrobeItem.Id.Value);
             await _wishlistItemRepository.UpdateAsync(wishlistItem, cancellationToken);

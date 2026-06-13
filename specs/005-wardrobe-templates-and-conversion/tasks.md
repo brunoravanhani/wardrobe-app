@@ -88,7 +88,7 @@ opens a pre-filled confirmation dialog; "Ver no Guarda-Roupa" link in history.
 
 ---
 
-## Phase 3 — Story B Backend: Templates and Slots
+## Phase 3 — Story B Backend: Templates and Slots ✓
 
 **Goal**: Read-only template+composition query, per-user slot materialization on
 template selection, auto-fulfillment and reversion hooks, and
@@ -97,7 +97,7 @@ composition is fixed per template.
 
 ### Tests (write first)
 
-- [ ] T013 [US-B-BE] Unit tests:
+- [x] T013 [US-B-BE] Unit tests:
   - `TemplateSlot` invariants: `Fulfill` sets wardrobe item and `fulfilled_at`;
     `Unfulfill` clears both; double-fulfill rejected
   - `TemplateSlotFulfillmentService` picks oldest open slot by `(user_id, category)`
@@ -107,7 +107,7 @@ composition is fixed per template.
     fulfilled slots of the previous template
   `tests/VirtualWardrobe.UnitTests/Templates/`
 
-- [ ] T014 [US-B-BE] Integration tests:
+- [x] T014 [US-B-BE] Integration tests:
   - `POST /v1/wardrobe-templates/{id}/select` materializes the correct slot count
     (Capsula → 20, Trabalho → 9); runs auto-fulfillment against existing wardrobe
     items in the same transaction
@@ -120,7 +120,7 @@ composition is fixed per template.
   - UNIQUE constraint on `wardrobe_item_id` enforced across templates
   `tests/VirtualWardrobe.IntegrationTests/Templates/`
 
-- [ ] T015 [US-B-BE] Contract tests:
+- [x] T015 [US-B-BE] Contract tests:
   - `GET /v1/wardrobe-templates` returns all system templates with their slot
     compositions (category + quantity per template)
   - `GET /v1/wardrobe-templates/{id}/slots` returns user's materialized slots
@@ -130,36 +130,36 @@ composition is fixed per template.
 
 ### Implementation
 
-- [ ] T016 [US-B-BE] Domain: `WardrobeTemplate` read-only value type — `Id`,
+- [x] T016 [US-B-BE] Domain: `WardrobeTemplate` read-only value type — `Id`,
   `Name`, `IReadOnlyList<TemplateSlotDefinition> SlotDefinitions`; no mutation
   methods. `TemplateSlotDefinition` value type — `Category`, `Quantity`.
   `src/VirtualWardrobe.Domain/Templates/WardrobeTemplate.cs`
   `src/VirtualWardrobe.Domain/Templates/TemplateSlotDefinition.cs`
 
-- [ ] T017 [US-B-BE] Domain: `TemplateSlot` aggregate — `Id`, `TemplateId`,
+- [x] T017 [US-B-BE] Domain: `TemplateSlot` aggregate — `Id`, `TemplateId`,
   `UserId`, `Category`, `WardrobeItemId?`, `WishlistItemId?`, `FulfilledAt?`;
   `Fulfill(wardrobeItemId)`, `Unfulfill()`, `LinkToWishlist(wishlistItemId)` methods
   `src/VirtualWardrobe.Domain/Templates/TemplateSlot.cs`
 
-- [ ] T018 [US-B-BE] Application service: `TemplateSlotFulfillmentService` —
+- [x] T018 [US-B-BE] Application service: `TemplateSlotFulfillmentService` —
   queries open slots by `(user_id, category)` sorted by `created_at ASC`, assigns
   the first result; handles wishlist-linked slot resolution
   `src/VirtualWardrobe.Application/Templates/TemplateSlotFulfillmentService.cs`
 
-- [ ] T019 [US-B-BE] Persistence: EF Core config for `WardrobeTemplate`,
+- [x] T019 [US-B-BE] Persistence: EF Core config for `WardrobeTemplate`,
   `TemplateSlotDefinition`, and `TemplateSlot` (UNIQUE index on
   `wardrobe_item_id`); `active_template_id` column on `Users`;
   migration `20260612_AddWardrobeTemplatesAndSlots`
   `src/VirtualWardrobe.Infrastructure/Persistence/`
 
-- [ ] T019b [US-B-BE] Data migration: `20260612_SeedDefaultTemplates` — insert
+- [x] T019b [US-B-BE] Data migration: `20260612_SeedDefaultTemplates` — insert
   "Capsula" (`a1000000-0000-0000-0000-000000000001`) and "Trabalho"
   (`a1000000-0000-0000-0000-000000000002`) plus all `TemplateSlotDefinitions` rows
   (Capsula: 8 TShirt, 3 Shirt, 3 Pants, 3 Shorts, 3 Shoes; Trabalho: 5 Shirt,
   3 Trousers, 1 Shoes); `Down()` removes all seeded rows
   `src/VirtualWardrobe.Infrastructure/Persistence/Migrations/`
 
-- [ ] T020 [US-B-BE] Repository interfaces + EF implementations:
+- [x] T020 [US-B-BE] Repository interfaces + EF implementations:
   - `IWardrobeTemplateRepository` — `GetAllAsync()` returns templates with their
     `TemplateSlotDefinitions` (no write methods)
   - `ITemplateSlotRepository` — `GetByUserAndTemplateAsync(userId, templateId)`,
@@ -168,7 +168,7 @@ composition is fixed per template.
   `src/VirtualWardrobe.Application/Templates/`
   `src/VirtualWardrobe.Infrastructure/Templates/`
 
-- [ ] T021 [US-B-BE] Application queries/commands:
+- [x] T021 [US-B-BE] Application queries/commands:
   - `GetTemplatesQuery` — returns all system templates with slot compositions
   - `GetUserSlotsQuery(userId, templateId)` — returns user's materialized slots
   - `SelectTemplateCommand(userId, templateId)` — atomically deletes unfulfilled
@@ -179,17 +179,17 @@ composition is fixed per template.
     pre-filled with slot category and sets `TemplateSlot.WishlistItemId`
   `src/VirtualWardrobe.Application/Templates/`
 
-- [ ] T022 [US-B-BE] Hook auto-fulfillment into `CreateWardrobeItemHandler`
+- [x] T022 [US-B-BE] Hook auto-fulfillment into `CreateWardrobeItemHandler`
   and `ConvertWishlistItemHandler`: call `TemplateSlotFulfillmentService` after
   successful item creation
-  `src/VirtualWardrobe.Application/Wardrobe/CreateWardrobeItemHandler.cs`
+  `src/VirtualWardrobe.Application/Wardrobe/CreateWardrobeItemCommand.cs`
   `src/VirtualWardrobe.Application/Wishlist/ConvertWishlistItemCommand.cs`
 
-- [ ] T023 [US-B-BE] Hook slot reversion into `DeleteWardrobeItemHandler`:
+- [x] T023 [US-B-BE] Hook slot reversion into `DeleteWardrobeItemHandler`:
   if the deleted item fills a slot, call `TemplateSlot.Unfulfill()`
-  `src/VirtualWardrobe.Application/Wardrobe/DeleteWardrobeItemHandler.cs`
+  `src/VirtualWardrobe.Application/Wardrobe/CreateWardrobeItemCommand.cs`
 
-- [ ] T024 [US-B-BE] API endpoints (no template write endpoints; no slot
+- [x] T024 [US-B-BE] API endpoints (no template write endpoints; no slot
   add/delete by user):
   - `GET  /v1/wardrobe-templates` — all templates with their slot compositions
   - `GET  /v1/wardrobe-templates/{templateId}/slots` — user's materialized slots
