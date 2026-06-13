@@ -1,20 +1,25 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
-#pragma warning disable CA1707
 
 namespace VirtualWardrobe.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class _20260612_AddWardrobeTemplatesAndSlots : Migration
+    public partial class AddWardrobeTemplates : Migration
     {
-        private static readonly string[] UserIdTemplateIdColumns = ["user_id", "template_id"];
-        private static readonly string[] UserIdCategoryColumns = ["user_id", "category"];
+        private static readonly string[] _userIdCategoryColumns = ["user_id", "category"];
+        private static readonly string[] _userIdTemplateIdColumns = ["user_id", "template_id"];
 
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<Guid>(
+                name: "active_template_id",
+                table: "users",
+                type: "uuid",
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "wardrobe_templates",
                 columns: table => new
@@ -47,12 +52,6 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "active_template_id",
-                table: "users",
-                type: "uuid",
-                nullable: true);
-
             migrationBuilder.CreateTable(
                 name: "template_slots",
                 columns: table => new
@@ -71,26 +70,23 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_template_slots", x => x.id);
                     table.ForeignKey(
-                        name: "FK_template_slots_wardrobe_templates_template_id",
-                        column: x => x.template_id,
-                        principalTable: "wardrobe_templates",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "FK_template_slots_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_template_slots_wardrobe_templates_template_id",
+                        column: x => x.template_id,
+                        principalTable: "wardrobe_templates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_users_wardrobe_templates_active_template_id",
+            migrationBuilder.CreateIndex(
+                name: "IX_users_active_template_id",
                 table: "users",
-                column: "active_template_id",
-                principalTable: "wardrobe_templates",
-                principalColumn: "id",
-                onDelete: ReferentialAction.SetNull);
+                column: "active_template_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_template_slot_definitions_template_id",
@@ -98,14 +94,19 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                 column: "template_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_template_slots_user_id_template_id",
+                name: "IX_template_slots_template_id",
                 table: "template_slots",
-                columns: UserIdTemplateIdColumns);
+                column: "template_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_template_slots_user_id_category",
                 table: "template_slots",
-                columns: UserIdCategoryColumns);
+                columns: _userIdCategoryColumns);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_template_slots_user_id_template_id",
+                table: "template_slots",
+                columns: _userIdTemplateIdColumns);
 
             migrationBuilder.CreateIndex(
                 name: "IX_template_slots_wardrobe_item_id",
@@ -114,20 +115,30 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                 unique: true,
                 filter: "wardrobe_item_id IS NOT NULL");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_users_active_template_id",
+            migrationBuilder.AddForeignKey(
+                name: "FK_users_wardrobe_templates_active_template_id",
                 table: "users",
-                column: "active_template_id");
+                column: "active_template_id",
+                principalTable: "wardrobe_templates",
+                principalColumn: "id",
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "template_slots");
-
             migrationBuilder.DropForeignKey(
                 name: "FK_users_wardrobe_templates_active_template_id",
                 table: "users");
+
+            migrationBuilder.DropTable(
+                name: "template_slot_definitions");
+
+            migrationBuilder.DropTable(
+                name: "template_slots");
+
+            migrationBuilder.DropTable(
+                name: "wardrobe_templates");
 
             migrationBuilder.DropIndex(
                 name: "IX_users_active_template_id",
@@ -136,9 +147,6 @@ namespace VirtualWardrobe.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "active_template_id",
                 table: "users");
-
-            migrationBuilder.DropTable(name: "template_slot_definitions");
-            migrationBuilder.DropTable(name: "wardrobe_templates");
         }
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VirtualWardrobe.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class _20260612_SeedDefaultTemplates : Migration
+    public partial class SeedDefaultTemplates : Migration
     {
         private static readonly Guid CapsuleId = new("a1000000-0000-0000-0000-000000000001");
         private static readonly Guid TrabalhoId = new("a1000000-0000-0000-0000-000000000002");
