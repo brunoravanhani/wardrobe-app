@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using VirtualWardrobe.Application.Storage;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Infrastructure.Persistence;
@@ -81,7 +82,9 @@ public sealed class WardrobeItemTests
     {
         var wardrobeRepository = new EfWardrobeItemRepository(dbContext);
         var mediaRepository = new EfMediaAssetRepository(dbContext);
-        return new CreateWardrobeItemCommand(wardrobeRepository, mediaRepository, new NoOpMediaUrlService());
+        var slotRepository = new EfTemplateSlotRepository(dbContext);
+        var fulfillmentService = new TemplateSlotFulfillmentService(slotRepository);
+        return new CreateWardrobeItemCommand(wardrobeRepository, mediaRepository, new NoOpMediaUrlService(), fulfillmentService);
     }
 
     private sealed class NoOpMediaUrlService : IPrivateMediaUrlService

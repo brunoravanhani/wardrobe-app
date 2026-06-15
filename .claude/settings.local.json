@@ -10,7 +10,10 @@
       "PowerShell(pnpm build *)",
       "PowerShell(pnpm exec *)",
       "PowerShell(dotnet build *)",
-      "PowerShell(dotnet test *)"
+      "PowerShell(dotnet test *)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "PowerShell(cd C:\\\\projetos\\\\virtual-wardrobe\\\\backend && dotnet build VirtualWardrobe.sln 2>&1 | Where-Object { $_ -match \"error\" } | Select-Object -First 15)"
     ]
   }
 }

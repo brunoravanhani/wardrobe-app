@@ -161,6 +161,20 @@ public sealed class WishlistItem : Entity<WishlistItemId>
         Touch();
     }
 
+    public WardrobeItemCreationData ConvertToWardrobe(DateTime? purchasedAtUtc = null)
+    {
+        if (Status == WishlistItemStatus.Purchased)
+        {
+            throw new ArgumentException("Wishlist item is already purchased.");
+        }
+
+        Status = WishlistItemStatus.Purchased;
+        PurchasedAtUtc = purchasedAtUtc ?? DateTime.UtcNow;
+        Touch();
+
+        return new WardrobeItemCreationData(Category, Name, Brand, TargetPrice);
+    }
+
     public void MarkAsConverted(Guid wardrobeItemId)
     {
         if (wardrobeItemId == Guid.Empty)

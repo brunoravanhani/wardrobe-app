@@ -69,12 +69,100 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                     b.ToTable("media_assets", (string)null);
                 });
 
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.TemplateSlotDefinitionRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("category");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateId");
+
+                    b.ToTable("template_slot_definitions", (string)null);
+                });
+
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.TemplateSlotRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateTime?>("FulfilledAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fulfilled_at_utc");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid?>("WardrobeItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("wardrobe_item_id");
+
+                    b.Property<Guid?>("WishlistItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("wishlist_item_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("WardrobeItemId")
+                        .IsUnique()
+                        .HasFilter("wardrobe_item_id IS NOT NULL");
+
+                    b.HasIndex("UserId", "Category");
+
+                    b.HasIndex("UserId", "TemplateId");
+
+                    b.ToTable("template_slots", (string)null);
+                });
+
             modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.UserRecord", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid?>("ActiveTemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("active_template_id");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -108,6 +196,8 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                         .HasColumnName("updated_at_utc");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ActiveTemplateId");
 
                     b.HasIndex("Email");
 
@@ -178,6 +268,24 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                     b.HasIndex("UserId", "CreatedAtUtc");
 
                     b.ToTable("wardrobe_items", (string)null);
+                });
+
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.WardrobeTemplateRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("wardrobe_templates", (string)null);
                 });
 
             modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.WishlistExternalLinkRecord", b =>
@@ -294,6 +402,46 @@ namespace VirtualWardrobe.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.TemplateSlotDefinitionRecord", b =>
+                {
+                    b.HasOne("VirtualWardrobe.Infrastructure.Persistence.Entities.WardrobeTemplateRecord", "Template")
+                        .WithMany("SlotDefinitions")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Template");
+                });
+
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.TemplateSlotRecord", b =>
+                {
+                    b.HasOne("VirtualWardrobe.Infrastructure.Persistence.Entities.WardrobeTemplateRecord", "Template")
+                        .WithMany("TemplateSlots")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VirtualWardrobe.Infrastructure.Persistence.Entities.UserRecord", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Template");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.UserRecord", b =>
+                {
+                    b.HasOne("VirtualWardrobe.Infrastructure.Persistence.Entities.WardrobeTemplateRecord", "ActiveTemplate")
+                        .WithMany()
+                        .HasForeignKey("ActiveTemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ActiveTemplate");
+                });
+
             modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.WardrobeItemRecord", b =>
                 {
                     b.HasOne("VirtualWardrobe.Infrastructure.Persistence.Entities.UserRecord", "User")
@@ -330,6 +478,13 @@ namespace VirtualWardrobe.Infrastructure.Migrations
             modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.UserRecord", b =>
                 {
                     b.Navigation("MediaAssets");
+                });
+
+            modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.WardrobeTemplateRecord", b =>
+                {
+                    b.Navigation("SlotDefinitions");
+
+                    b.Navigation("TemplateSlots");
                 });
 
             modelBuilder.Entity("VirtualWardrobe.Infrastructure.Persistence.Entities.WishlistItemRecord", b =>

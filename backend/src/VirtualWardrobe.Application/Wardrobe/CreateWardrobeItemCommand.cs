@@ -1,5 +1,6 @@
 using VirtualWardrobe.Application.Common;
 using VirtualWardrobe.Application.Storage;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Domain.Wardrobe;
 
@@ -33,15 +34,18 @@ public sealed class CreateWardrobeItemCommand
     private readonly IWardrobeItemRepository _wardrobeItemRepository;
     private readonly IMediaAssetRepository _mediaAssetRepository;
     private readonly IPrivateMediaUrlService _mediaUrlService;
+    private readonly TemplateSlotFulfillmentService _fulfillmentService;
 
     public CreateWardrobeItemCommand(
         IWardrobeItemRepository wardrobeItemRepository,
         IMediaAssetRepository mediaAssetRepository,
-        IPrivateMediaUrlService mediaUrlService)
+        IPrivateMediaUrlService mediaUrlService,
+        TemplateSlotFulfillmentService fulfillmentService)
     {
         _wardrobeItemRepository = wardrobeItemRepository;
         _mediaAssetRepository = mediaAssetRepository;
         _mediaUrlService = mediaUrlService;
+        _fulfillmentService = fulfillmentService;
     }
 
     public async Task<Result<WardrobeItem>> CreateAsync(CreateWardrobeItemInput input, CancellationToken cancellationToken)
@@ -72,6 +76,7 @@ public sealed class CreateWardrobeItemCommand
                 input.CareTagImageAssetId.HasValue ? new MediaAssetId(input.CareTagImageAssetId.Value) : null);
 
             await _wardrobeItemRepository.AddAsync(item, cancellationToken);
+            await _fulfillmentService.TryFulfillAsync(ownerUserId, item, cancellationToken);
             await _wardrobeItemRepository.SaveChangesAsync(cancellationToken);
 
             return Result.Success(item);
@@ -150,6 +155,7 @@ public sealed class CreateWardrobeItemCommand
         var bodyImageId = item.BodyImageAssetId?.Value;
         var careTagImageId = item.CareTagImageAssetId?.Value;
 
+        await _fulfillmentService.TryUnfulfillAsync(item.Id, cancellationToken);
         await _wardrobeItemRepository.RemoveAsync(item, cancellationToken);
         await _wardrobeItemRepository.SaveChangesAsync(cancellationToken);
 

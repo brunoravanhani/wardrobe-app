@@ -18,8 +18,15 @@ public sealed class UserRecordConfiguration : IEntityTypeConfiguration<UserRecor
         builder.Property(x => x.Locale).HasColumnName("locale").HasMaxLength(16).IsRequired();
         builder.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(x => x.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
+        builder.Property(x => x.ActiveTemplateId).HasColumnName("active_template_id");
+
+        builder.HasOne(x => x.ActiveTemplate)
+            .WithMany()
+            .HasForeignKey(x => x.ActiveTemplateId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(x => x.GoogleSubject).IsUnique();
         builder.HasIndex(x => x.Email);
+        builder.HasIndex(x => x.ActiveTemplateId);
     }
 }

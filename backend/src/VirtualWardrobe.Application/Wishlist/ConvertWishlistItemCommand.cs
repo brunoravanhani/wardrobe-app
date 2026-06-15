@@ -1,4 +1,5 @@
 using VirtualWardrobe.Application.Common;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
 using VirtualWardrobe.Domain.Wardrobe;
@@ -23,33 +24,21 @@ public sealed class ConvertWishlistItemCommand
     private readonly IWishlistItemRepository _wishlistItemRepository;
     private readonly IWardrobeItemRepository _wardrobeItemRepository;
     private readonly IMediaAssetRepository _mediaAssetRepository;
+    private readonly TemplateSlotFulfillmentService _fulfillmentService;
 
     public ConvertWishlistItemCommand(
         IWishlistItemRepository wishlistItemRepository,
         IWardrobeItemRepository wardrobeItemRepository,
-        IMediaAssetRepository mediaAssetRepository)
+        IMediaAssetRepository mediaAssetRepository,
+        TemplateSlotFulfillmentService fulfillmentService)
     {
         _wishlistItemRepository = wishlistItemRepository;
         _wardrobeItemRepository = wardrobeItemRepository;
         _mediaAssetRepository = mediaAssetRepository;
+        _fulfillmentService = fulfillmentService;
     }
 
-    public async Task<Result<WishlistItem>> MarkAsPurchasedAsync(Guid itemId, Guid ownerUserId, CancellationToken cancellationToken)
-    {
-        var item = await _wishlistItemRepository.GetByIdAsync(new WishlistItemId(itemId), new UserId(ownerUserId), cancellationToken);
-        if (item is null)
-        {
-            return Result.Failure<WishlistItem>(ResultError.NotFound("Wishlist item was not found."));
-        }
-
-        item.MarkAsPurchased();
-        await _wishlistItemRepository.UpdateAsync(item, cancellationToken);
-        await _wishlistItemRepository.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(item);
-    }
-
-    public async Task<Result<WardrobeItem>> ConvertToWardrobeAsync(ConvertWishlistItemInput input, CancellationToken cancellationToken)
+    public async Task<Result<WardrobeItem>> CombinedConvertAsync(ConvertWishlistItemInput input, CancellationToken cancellationToken)
     {
         var ownerUserId = new UserId(input.OwnerUserId);
         var wishlistItem = await _wishlistItemRepository.GetByIdAsync(new WishlistItemId(input.ItemId), ownerUserId, cancellationToken);
@@ -57,11 +46,6 @@ public sealed class ConvertWishlistItemCommand
         if (wishlistItem is null)
         {
             return Result.Failure<WardrobeItem>(ResultError.NotFound("Wishlist item was not found."));
-        }
-
-        if (wishlistItem.Status != WishlistItemStatus.Purchased)
-        {
-            return Result.Failure<WardrobeItem>(ResultError.Validation("Wishlist item must be marked as purchased before conversion."));
         }
 
         if (wishlistItem.ConvertedWardrobeItemId.HasValue)
@@ -96,10 +80,13 @@ public sealed class ConvertWishlistItemCommand
 
         try
         {
+            if (wishlistItem.Status == WishlistItemStatus.Active)
+            {
+                wishlistItem.ConvertToWardrobe();
+            }
+
             var wardrobeItem = WardrobeItem.Create(
-                wishlistItem.ConvertedWardrobeItemId.HasValue
-                    ? new WardrobeItemId(wishlistItem.ConvertedWardrobeItemId.Value)
-                    : WardrobeItemId.New(),
+                WardrobeItemId.New(),
                 ownerUserId,
                 input.Category ?? wishlistItem.Category,
                 string.IsNullOrWhiteSpace(input.Name) ? wishlistItem.Name : input.Name,
@@ -110,6 +97,7 @@ public sealed class ConvertWishlistItemCommand
                 input.CareTagImageAssetId.HasValue ? new MediaAssetId(input.CareTagImageAssetId.Value) : null);
 
             await _wardrobeItemRepository.AddAsync(wardrobeItem, cancellationToken);
+            await _fulfillmentService.TryFulfillAsync(ownerUserId, wardrobeItem, cancellationToken);
 
             wishlistItem.MarkAsConverted(wardrobeItem.Id.Value);
             await _wishlistItemRepository.UpdateAsync(wishlistItem, cancellationToken);

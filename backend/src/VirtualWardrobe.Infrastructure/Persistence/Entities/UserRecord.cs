@@ -16,5 +16,9 @@ public sealed class UserRecord
 
     public DateTime UpdatedAtUtc { get; set; }
 
+    public Guid? ActiveTemplateId { get; set; }
+
+    public WardrobeTemplateRecord? ActiveTemplate { get; set; }
+
     public List<MediaAssetRecord> MediaAssets { get; set; } = [];
 }

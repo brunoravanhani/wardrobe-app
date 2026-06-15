@@ -115,7 +115,7 @@ export function LoginPage() {
             const token = response.credential?.trim()
 
             if (!token) {
-              setErrorMessage('Google nao retornou um token valido. Tente novamente.')
+              setErrorMessage('Google não retornou um token válido. Tente novamente.')
               return
             }
 
@@ -134,7 +134,7 @@ export function LoginPage() {
 
       } catch {
         if (isMounted) {
-          setErrorMessage('Nao foi possivel carregar o Google Sign-In. Tente novamente.')
+          setErrorMessage('Não foi possível carregar o Google Sign-In. Tente novamente.')
         }
       } finally {
         if (isMounted) {
@@ -166,12 +166,12 @@ export function LoginPage() {
         <div className="mt-6">
           {googleClientId ? (
             <div className="flex flex-col items-center gap-3">
-              {isGoogleLoading ? <p className="text-sm text-slate-600">Carregando botao do Google...</p> : null}
+              {isGoogleLoading ? <p className="text-sm text-slate-600">Carregando botão do Google...</p> : null}
               <div ref={googleButtonRef} className="flex min-h-10 justify-center" aria-live="polite" />
             </div>
           ) : (
             <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              VITE_GOOGLE_CLIENT_ID nao configurado. Configure no frontend/.env para habilitar o login.
+              VITE_GOOGLE_CLIENT_ID não configurado. Configure no frontend/.env para habilitar o login.
             </p>
           )}
 

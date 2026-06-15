@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuthSession } from '../../app/providers/auth-context'
 import {
   createWishlistApi,
@@ -127,20 +128,10 @@ export function WishlistPage() {
       setEditor(null)
       await loadItems()
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel salvar o item da wishlist.'
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar o item da wishlist.'
       setSubmitError(message)
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  async function handleMarkAsPurchased(item: WishlistItem) {
-    try {
-      await api.markAsPurchased(item.id)
-      await loadItems()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel atualizar o status do item.'
-      setErrorMessage(message)
     }
   }
 
@@ -165,7 +156,7 @@ export function WishlistPage() {
       setConversionSuccessMessage('Convertido para guarda-roupa com sucesso.')
       await loadItems()
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel converter o item.'
+      const message = error instanceof Error ? error.message : 'Não foi possível converter o item.'
       setConversionError(message)
     } finally {
       setIsSaving(false)
@@ -211,7 +202,7 @@ export function WishlistPage() {
       <div
         className="mb-5 flex flex-wrap gap-6 border-b border-stone-200"
         role="tablist"
-        aria-label="Visualizacao da wishlist"
+        aria-label="Visualização da wishlist"
       >
         <ViewTab
           active={viewMode === 'active'}
@@ -222,7 +213,7 @@ export function WishlistPage() {
         />
         <ViewTab
           active={viewMode === 'history'}
-          label="Historico"
+          label="Histórico"
           onClick={() => {
             setViewMode('history')
           }}
@@ -263,7 +254,7 @@ export function WishlistPage() {
 
       {!isLoading && items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-slate-600">
-          Nenhum item encontrado nesta visualizacao.
+          Nenhum item encontrado nesta visualização.
         </p>
       ) : null}
 
@@ -290,7 +281,7 @@ export function WishlistPage() {
               </div>
 
               {item.brand ? <p className="text-sm text-slate-600">{item.brand}</p> : null}
-              <p className="text-sm font-medium text-slate-800">Preco alvo: {formatPrice(item.targetPrice)}</p>
+              <p className="text-sm font-medium text-slate-800">Preço alvo: {formatPrice(item.targetPrice)}</p>
 
               {item.links.length > 0 ? (
                 <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
@@ -309,19 +300,7 @@ export function WishlistPage() {
               ) : null}
 
               <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                {item.status === 'Active' ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleMarkAsPurchased(item)
-                    }}
-                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
-                  >
-                    Marcar como comprado
-                  </button>
-                ) : null}
-
-                {item.status === 'Purchased' && !item.convertedWardrobeItemId ? (
+                {!item.convertedWardrobeItemId ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -333,6 +312,15 @@ export function WishlistPage() {
                   >
                     Converter para guarda-roupa
                   </button>
+                ) : null}
+
+                {item.convertedWardrobeItemId ? (
+                  <Link
+                    to="/"
+                    className="rounded-md bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800"
+                  >
+                    Ver no Guarda-Roupa
+                  </Link>
                 ) : null}
 
                 <button

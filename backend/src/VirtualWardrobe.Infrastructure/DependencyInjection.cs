@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualWardrobe.Application.Auth;
 using VirtualWardrobe.Application.Storage;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Infrastructure.Auth;
@@ -81,10 +82,18 @@ public static class DependencyInjection
         services.AddScoped<IWardrobeItemRepository, EfWardrobeItemRepository>();
         services.AddScoped<IWishlistItemRepository, EfWishlistItemRepository>();
         services.AddScoped<IMediaAssetRepository, EfMediaAssetRepository>();
+        services.AddScoped<IWardrobeTemplateRepository, EfWardrobeTemplateRepository>();
+        services.AddScoped<ITemplateSlotRepository, EfTemplateSlotRepository>();
+        services.AddScoped<IUserActiveTemplateRepository, EfUserActiveTemplateRepository>();
+        services.AddScoped<TemplateSlotFulfillmentService>();
         services.AddScoped<AuthSessionService>();
         services.AddScoped<CreateWardrobeItemCommand>();
         services.AddScoped<CreateWishlistItemCommand>();
         services.AddScoped<ConvertWishlistItemCommand>();
+        services.AddScoped<GetTemplatesQuery>();
+        services.AddScoped<GetUserSlotsQuery>();
+        services.AddScoped<SelectTemplateCommand>();
+        services.AddScoped<LinkSlotToWishlistCommand>();
 
         return services;
     }

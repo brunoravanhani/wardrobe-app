@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Domain.Common;
@@ -12,7 +13,57 @@ namespace VirtualWardrobe.IntegrationTests.Wishlist;
 public sealed class WishlistConversionTests
 {
     [Fact]
-    public async Task PurchaseAndConvertShouldPersistHistoryAndBeIdempotent()
+    public async Task CombinedConvertActiveItemShouldMarkAsPurchasedAndCreateWardrobeItemInOneCall()
+    {
+        await using var dbContext = CreateDbContext();
+
+        var ownerId = Guid.NewGuid();
+        var wishlistItemId = Guid.NewGuid();
+
+        dbContext.WishlistItems.Add(new WishlistItemRecord
+        {
+            Id = wishlistItemId,
+            UserId = ownerId,
+            Category = ClothingCategory.TShirt.ToString(),
+            Name = "Camiseta básica",
+            Brand = "Marca F",
+            TargetPrice = 89.90m,
+            Status = WishlistItemStatus.Active.ToString(),
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var command = CreateCommand(dbContext);
+
+        var result = await command.CombinedConvertAsync(
+            new ConvertWishlistItemInput(
+                wishlistItemId,
+                ownerId,
+                null,
+                null,
+                "M",
+                null,
+                null,
+                null,
+                null),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+
+        var wardrobeCount = await dbContext.WardrobeItems.CountAsync(x => x.UserId == ownerId);
+        Assert.Equal(1, wardrobeCount);
+
+        var wishlistRecord = await dbContext.WishlistItems.FindAsync(wishlistItemId);
+        Assert.NotNull(wishlistRecord);
+        Assert.Equal(WishlistItemStatus.Purchased.ToString(), wishlistRecord!.Status);
+        Assert.NotNull(wishlistRecord.PurchasedAtUtc);
+        Assert.Equal(result.Value.Id.Value, wishlistRecord.ConvertedWardrobeItemId);
+    }
+
+    [Fact]
+    public async Task ConvertShouldPersistHistoryAndBeIdempotent()
     {
         await using var dbContext = CreateDbContext();
 
@@ -36,10 +87,7 @@ public sealed class WishlistConversionTests
 
         var command = CreateCommand(dbContext);
 
-        var purchaseResult = await command.MarkAsPurchasedAsync(wishlistItemId, ownerId, CancellationToken.None);
-        Assert.True(purchaseResult.IsSuccess);
-
-        var firstConvert = await command.ConvertToWardrobeAsync(
+        var firstConvert = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(
                 wishlistItemId,
                 ownerId,
@@ -52,7 +100,7 @@ public sealed class WishlistConversionTests
                 null),
             CancellationToken.None);
 
-        var secondConvert = await command.ConvertToWardrobeAsync(
+        var secondConvert = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(
                 wishlistItemId,
                 ownerId,
@@ -86,7 +134,9 @@ public sealed class WishlistConversionTests
         var wishlistRepository = new EfWishlistItemRepository(dbContext);
         var wardrobeRepository = new EfWardrobeItemRepository(dbContext);
         var mediaRepository = new EfMediaAssetRepository(dbContext);
-        return new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var slotRepository = new EfTemplateSlotRepository(dbContext);
+        var fulfillmentService = new TemplateSlotFulfillmentService(slotRepository);
+        return new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, fulfillmentService);
     }
 
     private static VirtualWardrobeDbContext CreateDbContext()

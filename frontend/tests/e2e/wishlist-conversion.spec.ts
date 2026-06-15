@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 const apiBase = process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:9323'
 
-test('marca item como comprado e converte para o guarda-roupa', async ({ page }) => {
+test('converte item ativo para o guarda-roupa em uma unica acao', async ({ page }) => {
   const wishlistItems: Array<{
     id: string
     category: string
@@ -41,7 +41,9 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
 
     if (endpoint.startsWith('/v1/wishlist-items') && method === 'GET') {
       const includePurchased = new URL(url).searchParams.get('includePurchased') === 'true'
-      const filtered = includePurchased ? wishlistItems : wishlistItems.filter((item) => item.status !== 'Purchased')
+      const filtered = includePurchased
+        ? wishlistItems
+        : wishlistItems.filter((item) => item.status !== 'Purchased')
       await route.fulfill({ status: 200, json: filtered })
       return
     }
@@ -54,7 +56,9 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
         name: String(payload.name),
         brand: payload.brand ? String(payload.brand) : null,
         targetPrice: Number(payload.targetPrice),
-        inspirationImageAssetId: payload.inspirationImageAssetId ? String(payload.inspirationImageAssetId) : null,
+        inspirationImageAssetId: payload.inspirationImageAssetId
+          ? String(payload.inspirationImageAssetId)
+          : null,
         links: Array.isArray(payload.links)
           ? payload.links.map((value) => ({
               url: String((value as { url: string }).url ?? value),
@@ -68,21 +72,6 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
 
       wishlistItems.push(created)
       await route.fulfill({ status: 201, json: created })
-      return
-    }
-
-    if (endpoint.startsWith('/v1/wishlist-items/') && endpoint.endsWith('/mark-purchased') && method === 'POST') {
-      const itemId = endpoint.replace('/v1/wishlist-items/', '').replace('/mark-purchased', '')
-      const target = wishlistItems.find((item) => item.id === itemId)
-
-      if (!target) {
-        await route.fulfill({ status: 404, json: { detail: 'Item nao encontrado.' } })
-        return
-      }
-
-      target.status = 'Purchased'
-      target.purchasedAtUtc = new Date().toISOString()
-      await route.fulfill({ status: 200, json: target })
       return
     }
 
@@ -104,22 +93,25 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
           brand: payload.brand ? String(payload.brand) : target.brand,
           size: String(payload.size),
           price: typeof payload.price === 'number' ? Number(payload.price) : target.targetPrice,
-          bodyImageAssetId: payload.bodyImageAssetId ? String(payload.bodyImageAssetId) : target.inspirationImageAssetId,
-          careTagImageAssetId: payload.careTagImageAssetId ? String(payload.careTagImageAssetId) : null,
+          bodyImageAssetId: payload.bodyImageAssetId
+            ? String(payload.bodyImageAssetId)
+            : target.inspirationImageAssetId,
+          careTagImageAssetId: payload.careTagImageAssetId
+            ? String(payload.careTagImageAssetId)
+            : null,
         }
 
         wardrobeItems.push(wardrobe)
         target.convertedWardrobeItemId = wardrobe.id
+        target.status = 'Purchased'
+        target.purchasedAtUtc = new Date().toISOString()
       }
 
       const converted = wardrobeItems.find((item) => item.id === target.convertedWardrobeItemId)
 
       await route.fulfill({
         status: 200,
-        json: {
-          wishlistItemId: target.id,
-          wardrobeItem: converted,
-        },
+        json: { wishlistItemId: target.id, wardrobeItem: converted },
       })
       return
     }
@@ -150,10 +142,6 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
 
   await expect(page.getByText('Bota de couro')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Marcar como comprado' }).click()
-  await page.getByRole('tab', { name: 'Historico' }).click()
-
-  await expect(page.getByText('Bota de couro')).toBeVisible()
   await page.getByRole('button', { name: 'Converter para guarda-roupa' }).click()
 
   await expect(page.getByRole('heading', { name: 'Converter para guarda-roupa' })).toBeVisible()
@@ -161,6 +149,12 @@ test('marca item como comprado e converte para o guarda-roupa', async ({ page })
   await page.getByRole('button', { name: 'Confirmar conversao' }).click()
 
   await expect(page.getByText('Convertido para guarda-roupa com sucesso.')).toBeVisible()
+
+  await expect(page.getByText('Bota de couro')).not.toBeVisible()
+
+  await page.getByRole('tab', { name: 'Historico' }).click()
+  await expect(page.getByText('Bota de couro')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Ver no Guarda-Roupa' })).toBeVisible()
 
   await page.getByRole('link', { name: 'Guarda-roupa' }).click()
   await expect(page.getByText('Bota de couro')).toBeVisible()

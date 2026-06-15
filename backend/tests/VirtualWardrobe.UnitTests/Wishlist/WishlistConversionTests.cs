@@ -1,6 +1,8 @@
+using VirtualWardrobe.Application.Templates;
 using VirtualWardrobe.Application.Wardrobe;
 using VirtualWardrobe.Application.Wishlist;
 using VirtualWardrobe.Domain.Common;
+using VirtualWardrobe.Domain.Templates;
 using VirtualWardrobe.Domain.Wardrobe;
 using VirtualWardrobe.Domain.Wishlist;
 
@@ -9,58 +11,107 @@ namespace VirtualWardrobe.UnitTests.Wishlist;
 public sealed class WishlistConversionTests
 {
     [Fact]
-    public async Task MarkAsPurchasedShouldSetPurchasedStatus()
+    public async Task CombinedConvertActiveItemShouldMarkAsPurchasedAndCreateWardrobeItem()
+    {
+        var ownerId = Guid.NewGuid();
+        var item = WishlistItem.Create(
+            WishlistItemId.New(),
+            new UserId(ownerId),
+            ClothingCategory.TShirt,
+            "Camiseta básica",
+            "Marca F",
+            89.90m,
+            null);
+
+        var wishlistRepository = new InMemoryWishlistItemRepository(item);
+        var wardrobeRepository = new InMemoryWardrobeItemRepository();
+        var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
+
+        var result = await command.CombinedConvertAsync(
+            new ConvertWishlistItemInput(
+                item.Id.Value,
+                ownerId,
+                null,
+                null,
+                "M",
+                null,
+                null,
+                null,
+                null),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, wardrobeRepository.Count);
+
+        var persisted = await wishlistRepository.GetByIdAsync(item.Id, new UserId(ownerId), CancellationToken.None);
+        Assert.NotNull(persisted);
+        Assert.Equal(WishlistItemStatus.Purchased, persisted!.Status);
+        Assert.NotNull(persisted.PurchasedAtUtc);
+        Assert.Equal(result.Value.Id.Value, persisted.ConvertedWardrobeItemId);
+    }
+
+    [Fact]
+    public async Task CombinedConvertAlreadyPurchasedItemShouldStillCreateWardrobeItem()
     {
         var ownerId = Guid.NewGuid();
         var item = WishlistItem.Create(
             WishlistItemId.New(),
             new UserId(ownerId),
             ClothingCategory.Shirt,
-            "Camisa premium",
-            "Marca X",
-            199.90m,
+            "Camisa social",
             null,
-            [("https://shop.example.com/items/1", null)]);
-
-        var wishlistRepository = new InMemoryWishlistItemRepository(item);
-        var wardrobeRepository = new InMemoryWardrobeItemRepository();
-        var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
-
-        var result = await command.MarkAsPurchasedAsync(item.Id.Value, ownerId, CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(WishlistItemStatus.Purchased, result.Value.Status);
-        Assert.NotNull(result.Value.PurchasedAtUtc);
-    }
-
-    [Fact]
-    public async Task ConvertWithoutSizeShouldFailValidation()
-    {
-        var ownerId = Guid.NewGuid();
-        var item = WishlistItem.Create(
-            WishlistItemId.New(),
-            new UserId(ownerId),
-            ClothingCategory.Coats,
-            "Jaqueta",
-            "Marca A",
-            320m,
-            null,
-            [("https://shop.example.com/items/2", null)]);
+            180m,
+            null);
         item.MarkAsPurchased();
 
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
 
-        var result = await command.ConvertToWardrobeAsync(
+        var result = await command.CombinedConvertAsync(
             new ConvertWishlistItemInput(
                 item.Id.Value,
                 ownerId,
                 null,
                 null,
-                " ",
+                "G",
+                null,
+                null,
+                null,
+                null),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, wardrobeRepository.Count);
+    }
+
+    [Fact]
+    public async Task CombinedConvertMissingSizeShouldReturnValidationError()
+    {
+        var ownerId = Guid.NewGuid();
+        var item = WishlistItem.Create(
+            WishlistItemId.New(),
+            new UserId(ownerId),
+            ClothingCategory.Shoes,
+            "Tênis esportivo",
+            null,
+            350m,
+            null);
+
+        var wishlistRepository = new InMemoryWishlistItemRepository(item);
+        var wardrobeRepository = new InMemoryWardrobeItemRepository();
+        var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
+
+        var result = await command.CombinedConvertAsync(
+            new ConvertWishlistItemInput(
+                item.Id.Value,
+                ownerId,
+                null,
+                null,
+                "  ",
                 null,
                 null,
                 null,
@@ -72,58 +123,35 @@ public sealed class WishlistConversionTests
     }
 
     [Fact]
-    public async Task ConvertPurchasedItemShouldBeIdempotent()
+    public async Task CombinedConvertAlreadyConvertedShouldReturnExistingWardrobeItem()
     {
         var ownerId = Guid.NewGuid();
         var item = WishlistItem.Create(
             WishlistItemId.New(),
             new UserId(ownerId),
-            ClothingCategory.Shoes,
-            "Tenis corrida",
-            "Marca B",
-            410m,
-            null,
-            [("https://shop.example.com/items/3", null)]);
+            ClothingCategory.Pants,
+            "Calça cargo",
+            "Marca G",
+            250m,
+            null);
         item.MarkAsPurchased();
 
         var wishlistRepository = new InMemoryWishlistItemRepository(item);
         var wardrobeRepository = new InMemoryWardrobeItemRepository();
         var mediaRepository = new InMemoryMediaAssetRepository(ownerId);
-        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository);
+        var command = new ConvertWishlistItemCommand(wishlistRepository, wardrobeRepository, mediaRepository, NoOpFulfillmentService());
 
-        var firstResult = await command.ConvertToWardrobeAsync(
-            new ConvertWishlistItemInput(
-                item.Id.Value,
-                ownerId,
-                null,
-                null,
-                "42",
-                null,
-                null,
-                null,
-                null),
+        var firstResult = await command.CombinedConvertAsync(
+            new ConvertWishlistItemInput(item.Id.Value, ownerId, null, null, "40", null, null, null, null),
             CancellationToken.None);
 
-        var secondResult = await command.ConvertToWardrobeAsync(
-            new ConvertWishlistItemInput(
-                item.Id.Value,
-                ownerId,
-                null,
-                null,
-                "42",
-                null,
-                null,
-                null,
-                null),
+        var secondResult = await command.CombinedConvertAsync(
+            new ConvertWishlistItemInput(item.Id.Value, ownerId, null, null, "40", null, null, null, null),
             CancellationToken.None);
 
         Assert.True(firstResult.IsSuccess);
         Assert.True(secondResult.IsSuccess);
         Assert.Equal(firstResult.Value.Id, secondResult.Value.Id);
-
-        var persistedWishlist = await wishlistRepository.GetByIdAsync(item.Id, new UserId(ownerId), CancellationToken.None);
-        Assert.NotNull(persistedWishlist);
-        Assert.Equal(firstResult.Value.Id.Value, persistedWishlist!.ConvertedWardrobeItemId);
         Assert.Equal(1, wardrobeRepository.Count);
     }
 
@@ -250,5 +278,20 @@ public sealed class WishlistConversionTests
         {
             return Task.FromResult(ownerUserId.Value == _owner && _ownedMediaIds.Contains(mediaAssetId.Value));
         }
+    }
+
+    private static TemplateSlotFulfillmentService NoOpFulfillmentService()
+        => new TemplateSlotFulfillmentService(new NoOpTemplateSlotRepository());
+
+    private sealed class NoOpTemplateSlotRepository : ITemplateSlotRepository
+    {
+        public Task AddRangeAsync(IEnumerable<TemplateSlot> slots, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UpdateAsync(TemplateSlot slot, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<TemplateSlot?> GetByIdAsync(TemplateSlotId slotId, UserId ownerUserId, CancellationToken cancellationToken) => Task.FromResult<TemplateSlot?>(null);
+        public Task<TemplateSlot?> GetByWardrobeItemIdAsync(WardrobeItemId wardrobeItemId, CancellationToken cancellationToken) => Task.FromResult<TemplateSlot?>(null);
+        public Task<IReadOnlyList<TemplateSlot>> ListByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TemplateSlot>>(Array.Empty<TemplateSlot>());
+        public Task<IReadOnlyList<TemplateSlot>> ListOpenByUserAndCategoryAsync(UserId userId, ClothingCategory category, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TemplateSlot>>(Array.Empty<TemplateSlot>());
+        public Task DeleteUnfulfilledByUserAndTemplateAsync(UserId userId, WardrobeTemplateId templateId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
