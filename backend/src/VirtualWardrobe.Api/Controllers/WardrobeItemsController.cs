@@ -11,7 +11,7 @@ namespace VirtualWardrobe.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("v1/wardrobe-items")]
-public sealed class WardrobeItemsController : ControllerBase
+public sealed class WardrobeItemsController : ApiControllerBase
 {
     private readonly CreateWardrobeItemCommand _createWardrobeItemCommand;
 
@@ -56,7 +56,7 @@ public sealed class WardrobeItemsController : ControllerBase
                 request.CareTagImageAssetId),
             cancellationToken);
 
-        return ToActionResult(result, StatusCodes.Status201Created);
+        return ToActionResult(result, Map, StatusCodes.Status201Created, "Wardrobe request failed");
     }
 
     [HttpPatch("{itemId:guid}")]
@@ -87,7 +87,7 @@ public sealed class WardrobeItemsController : ControllerBase
                 request.CareTagImageAssetId),
             cancellationToken);
 
-        return ToActionResult(result, StatusCodes.Status200OK);
+        return ToActionResult(result, Map, StatusCodes.Status200OK, "Wardrobe request failed");
     }
 
     [HttpDelete("{itemId:guid}")]
@@ -97,52 +97,9 @@ public sealed class WardrobeItemsController : ControllerBase
         var result = await _createWardrobeItemCommand.DeleteAsync(itemId, ownerUserId, cancellationToken);
 
         if (result.IsFailure)
-        {
-            var statusCode = result.Error.Code switch
-            {
-                "forbidden" => StatusCodes.Status403Forbidden,
-                "not_found" => StatusCodes.Status404NotFound,
-                _ => StatusCodes.Status400BadRequest
-            };
-
-            return Problem(title: "Wardrobe request failed", detail: result.Error.Message, statusCode: statusCode);
-        }
+            return ProblemFromError(result.Error, "Wardrobe request failed");
 
         return NoContent();
-    }
-
-    private ActionResult<WardrobeItemResponse> ToActionResult(Result<WardrobeItem> result, int successStatusCode)
-    {
-        if (result.IsFailure)
-        {
-            return ProblemFromError(result.Error);
-        }
-
-        var response = Map(result.Value);
-        if (successStatusCode == StatusCodes.Status201Created)
-        {
-            return CreatedAtAction(null, response);
-        }
-
-        return Ok(response);
-    }
-
-    private ActionResult<WardrobeItemResponse> ProblemFromError(ResultError error)
-    {
-        var statusCode = error.Code switch
-        {
-            "forbidden" => StatusCodes.Status403Forbidden,
-            "not_found" => StatusCodes.Status404NotFound,
-            _ => StatusCodes.Status400BadRequest
-        };
-
-        return Problem(title: "Wardrobe request failed", detail: error.Message, statusCode: statusCode);
-    }
-
-    private static bool TryParseCategory(string category, out ClothingCategory parsedCategory)
-    {
-        return Enum.TryParse(category, true, out parsedCategory)
-               && Enum.IsDefined(parsedCategory);
     }
 
     private static WardrobeItemResponse Map(WardrobeItem item)

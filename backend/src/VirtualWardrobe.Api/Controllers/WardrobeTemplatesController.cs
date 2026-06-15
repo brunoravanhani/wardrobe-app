@@ -11,7 +11,7 @@ namespace VirtualWardrobe.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("v1/wardrobe-templates")]
-public sealed class WardrobeTemplatesController : ControllerBase
+public sealed class WardrobeTemplatesController : ApiControllerBase
 {
     private readonly GetTemplatesQuery _getTemplatesQuery;
     private readonly GetUserSlotsQuery _getUserSlotsQuery;
@@ -54,12 +54,7 @@ public sealed class WardrobeTemplatesController : ControllerBase
             cancellationToken);
 
         if (result.IsFailure)
-        {
-            var statusCode = result.Error.Code == "not_found"
-                ? StatusCodes.Status404NotFound
-                : StatusCodes.Status400BadRequest;
-            return Problem(title: "Template selection failed", detail: result.Error.Message, statusCode: statusCode);
-        }
+            return ProblemFromError(result.Error, "Template selection failed");
 
         return NoContent();
     }
@@ -76,14 +71,7 @@ public sealed class WardrobeTemplatesController : ControllerBase
             cancellationToken);
 
         if (result.IsFailure)
-        {
-            var statusCode = result.Error.Code switch
-            {
-                "not_found" => StatusCodes.Status404NotFound,
-                _ => StatusCodes.Status400BadRequest
-            };
-            return Problem(title: "Link slot to wishlist failed", detail: result.Error.Message, statusCode: statusCode);
-        }
+            return ProblemFromError(result.Error, "Link slot to wishlist failed");
 
         return CreatedAtAction(nameof(GetUserSlotsAsync), MapWishlistItem(result.Value));
     }

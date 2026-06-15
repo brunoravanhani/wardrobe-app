@@ -13,7 +13,7 @@ namespace VirtualWardrobe.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("v1/wishlist-items")]
-public sealed partial class WishlistItemsController : ControllerBase
+public sealed partial class WishlistItemsController : ApiControllerBase
 {
     private readonly CreateWishlistItemCommand _createWishlistItemCommand;
     private readonly ConvertWishlistItemCommand _convertWishlistItemCommand;
@@ -65,7 +65,7 @@ public sealed partial class WishlistItemsController : ControllerBase
                 (request.Links ?? []).Select(x => new WishlistLinkInput(x.Url, x.Label)).ToArray()),
             cancellationToken);
 
-        return ToActionResult(result, StatusCodes.Status201Created);
+        return ToActionResult(result, Map, StatusCodes.Status201Created, "Wishlist request failed");
     }
 
     [HttpPatch("{itemId:guid}")]
@@ -96,7 +96,7 @@ public sealed partial class WishlistItemsController : ControllerBase
                 (request.Links ?? []).Select(x => new WishlistLinkInput(x.Url, x.Label)).ToArray()),
             cancellationToken);
 
-        return ToActionResult(result, StatusCodes.Status200OK);
+        return ToActionResult(result, Map, StatusCodes.Status200OK, "Wishlist request failed");
     }
 
     [HttpDelete("{itemId:guid}")]
@@ -106,16 +106,7 @@ public sealed partial class WishlistItemsController : ControllerBase
         var result = await _createWishlistItemCommand.DeleteAsync(itemId, ownerUserId, cancellationToken);
 
         if (result.IsFailure)
-        {
-            var statusCode = result.Error.Code switch
-            {
-                "forbidden" => StatusCodes.Status403Forbidden,
-                "not_found" => StatusCodes.Status404NotFound,
-                _ => StatusCodes.Status400BadRequest
-            };
-
-            return Problem(title: "Wishlist request failed", detail: result.Error.Message, statusCode: statusCode);
-        }
+            return ProblemFromError(result.Error, "Wishlist request failed");
 
         return NoContent();
     }
@@ -161,49 +152,13 @@ public sealed partial class WishlistItemsController : ControllerBase
         {
             TelemetryConfig.WishlistConversionFailures.Add(1);
             Log.ConversionFailed(_logger, itemId, result.Error.Message);
-
-            var statusCode = result.Error.Code switch
-            {
-                "forbidden" => StatusCodes.Status403Forbidden,
-                "not_found" => StatusCodes.Status404NotFound,
-                _ => StatusCodes.Status400BadRequest
-            };
-
-            return Problem(title: "Wishlist request failed", detail: result.Error.Message, statusCode: statusCode);
+            return ProblemFromError(result.Error, "Wishlist request failed");
         }
 
         TelemetryConfig.WishlistConversionSuccesses.Add(1);
         Log.ConversionSucceeded(_logger, itemId, result.Value.Id.Value);
 
         return Ok(new WishlistConversionResponse(itemId, MapWardrobe(result.Value)));
-    }
-
-    private ActionResult<WishlistItemResponse> ToActionResult(Result<WishlistItem> result, int successStatusCode)
-    {
-        if (result.IsFailure)
-        {
-            return ProblemFromError(result.Error);
-        }
-
-        var response = Map(result.Value);
-        if (successStatusCode == StatusCodes.Status201Created)
-        {
-            return CreatedAtAction(null, response);
-        }
-
-        return Ok(response);
-    }
-
-    private ActionResult<WishlistItemResponse> ProblemFromError(ResultError error)
-    {
-        var statusCode = error.Code switch
-        {
-            "forbidden" => StatusCodes.Status403Forbidden,
-            "not_found" => StatusCodes.Status404NotFound,
-            _ => StatusCodes.Status400BadRequest
-        };
-
-        return Problem(title: "Wishlist request failed", detail: error.Message, statusCode: statusCode);
     }
 
     private static WishlistItemResponse Map(WishlistItem item)
@@ -232,12 +187,6 @@ public sealed partial class WishlistItemsController : ControllerBase
             item.Price,
             item.BodyImageAssetId?.Value,
             item.CareTagImageAssetId?.Value);
-    }
-
-    private static bool TryParseCategory(string category, out ClothingCategory parsedCategory)
-    {
-        return Enum.TryParse(category, true, out parsedCategory)
-               && Enum.IsDefined(parsedCategory);
     }
 
     private static partial class Log
