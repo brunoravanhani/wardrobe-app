@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import {
   CLOTHING_CATEGORIES,
+  coerceCategoryString,
   getCategoryLabelPtBr,
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
@@ -35,7 +36,7 @@ export function ConvertWishlistItemDialog({
   onSubmit,
 }: ConvertWishlistItemDialogProps) {
   const [name, setName] = useState(item.name)
-  const [category, setCategory] = useState<ClothingCategory>(item.category)
+  const [category, setCategory] = useState<ClothingCategory>(coerceCategoryString(item.category as ClothingCategory | number))
   const [size, setSize] = useState('')
   const [brand, setBrand] = useState(item.brand ?? '')
   const [price, setPrice] = useState(formatEditablePrice(item.targetPrice))
@@ -56,12 +57,12 @@ export function ConvertWishlistItemDialog({
     const nextErrors: FormErrors = {}
 
     if (!size.trim()) {
-      nextErrors.size = 'Tamanho e obrigatorio para conversao.'
+      nextErrors.size = 'Tamanho é obrigatório para conversão.'
     }
 
     const parsedPrice = parsePrice(price)
     if (price.trim() && parsedPrice === null) {
-      nextErrors.price = 'Preco invalido. Use numeros positivos, ex.: 399,90.'
+      nextErrors.price = 'Preço inválido. Use números positivos, ex.: 399,90.'
     }
 
     setErrors(nextErrors)
@@ -95,7 +96,7 @@ export function ConvertWishlistItemDialog({
           Converter para guarda-roupa
         </h3>
 
-        <form onSubmit={handleSubmit} noValidate className="grid gap-3 md:grid-cols-2" aria-label="Formulario de conversao da wishlist">
+        <form onSubmit={handleSubmit} noValidate className="grid gap-3 md:grid-cols-2" aria-label="Formulário de conversão da wishlist">
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="convert-name">
           Nome
           <input
@@ -151,7 +152,7 @@ export function ConvertWishlistItemDialog({
         </label>
 
         <label className="md:col-span-2 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="convert-price">
-          Preco (R$)
+          Preço (R$)
           <input
             id="convert-price"
             name="price"
@@ -172,7 +173,7 @@ export function ConvertWishlistItemDialog({
             disabled={busy}
             className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {busy ? 'Convertendo...' : 'Confirmar conversao'}
+            {busy ? 'Convertendo...' : 'Confirmar conversão'}
           </button>
           <button
             type="button"

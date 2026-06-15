@@ -122,7 +122,7 @@ test('cria, edita e filtra pecas do guarda-roupa', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'Meu Guarda-roupa' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Nova peca' }).click()
+  await page.getByRole('button', { name: 'Nova peça' }).click()
   await page.getByLabel('Nome da peca').fill('Camiseta Azul')
   await page.getByLabel('Tamanho').fill('M')
   await page.getByLabel('Marca').fill('Marca X')

@@ -10,7 +10,7 @@ export function TemplateProgressBar({ fulfilled, total }: TemplateProgressBarPro
     <div className="mb-5">
       <div className="mb-1 flex items-center justify-between text-sm">
         <span className="font-medium text-slate-700">Progresso</span>
-        <span className="text-slate-600">{fulfilled} de {total} pecas adquiridas</span>
+        <span className="text-slate-600">{fulfilled} de {total} peças adquiridas</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-stone-200">
         <div
@@ -20,7 +20,7 @@ export function TemplateProgressBar({ fulfilled, total }: TemplateProgressBarPro
           aria-valuenow={fulfilled}
           aria-valuemin={0}
           aria-valuemax={total}
-          aria-label={`${fulfilled} de ${total} pecas adquiridas`}
+          aria-label={`${fulfilled} de ${total} peças adquiridas`}
         />
       </div>
     </div>

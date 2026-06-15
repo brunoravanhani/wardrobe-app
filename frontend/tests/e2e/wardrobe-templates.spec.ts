@@ -220,7 +220,7 @@ test('adicionar peca do guarda-roupa cumpre slot mais antigo', async ({ page }) 
 
   await expect(page.getByText('0 de 20 pecas adquiridas')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Nova peca' }).click()
+  await page.getByRole('button', { name: 'Nova peça' }).click()
   await page.getByLabel('Nome da peca').fill('Camiseta Azul')
   await page.getByLabel('Tamanho').fill('M')
   await page.getByRole('button', { name: 'Salvar peca' }).click()
@@ -299,5 +299,5 @@ test('trocar template mostra confirmacao e atualiza slots', async ({ page }) => 
   await expect(slotButtons).toHaveCount(9)
 
   await expect(page.getByRole('heading', { name: 'Camisa social' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Calca social' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Calça social' })).toBeVisible()
 })

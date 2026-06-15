@@ -37,12 +37,12 @@ export function LinkSlotToWishlistDialog({
     const nextErrors: FormErrors = {}
 
     if (!name.trim()) {
-      nextErrors.name = 'Nome e obrigatorio.'
+      nextErrors.name = 'Nome é obrigatório.'
     }
 
     const parsedPrice = parsePrice(price)
     if (parsedPrice === null || isNaN(parsedPrice) || parsedPrice <= 0) {
-      nextErrors.targetPrice = 'Preco deve ser maior que zero.'
+      nextErrors.targetPrice = 'Preço deve ser maior que zero.'
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -71,7 +71,7 @@ export function LinkSlotToWishlistDialog({
         onClick={stopPropagation}
       >
         <h2 id="link-slot-dialog-title" className="mb-1 text-xl font-semibold text-slate-900">
-          Adicionar a Lista de Desejos
+          Adicionar à Lista de Desejos
         </h2>
         <p className="mb-5 text-sm text-slate-500">Categoria: {categoryLabel}</p>
 
@@ -110,7 +110,7 @@ export function LinkSlotToWishlistDialog({
 
             <div>
               <label htmlFor="link-slot-price" className="mb-1 block text-sm font-medium text-slate-700">
-                Preco desejado (R$) <span aria-hidden="true">*</span>
+                Preço desejado (R$) <span aria-hidden="true">*</span>
               </label>
               <input
                 id="link-slot-price"

@@ -75,7 +75,7 @@ export function WardrobePage() {
       const nextItems = await api.listWardrobeItems()
       setItems(nextItems)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao carregar pecas do guarda-roupa.'
+      const message = error instanceof Error ? error.message : 'Falha ao carregar peças do guarda-roupa.'
       setErrorMessage(message)
     } finally {
       setIsLoading(false)
@@ -169,7 +169,7 @@ export function WardrobePage() {
       setEditor(null)
       await Promise.all([loadItems(), loadSlots()])
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel salvar a peca.'
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar a peça.'
       setSubmitError(message)
     } finally {
       setIsSaving(false)
@@ -265,7 +265,7 @@ export function WardrobePage() {
             }}
             className="rounded-md bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800"
           >
-            Nova peca
+            Nova peça
           </button>
         </div>
       </div>
@@ -335,7 +335,7 @@ export function WardrobePage() {
       ) : null}
 
       {errorMessage ? <p className="mb-3 text-sm text-red-700">{errorMessage}</p> : null}
-      {isLoading ? <p className="text-slate-700">Carregando pecas...</p> : null}
+      {isLoading ? <p className="text-slate-700">Carregando peças...</p> : null}
 
       {/* Template view */}
       {isTemplateActive ? (
@@ -397,7 +397,7 @@ export function WardrobePage() {
             if (extraCatItems.length === 0) return null
             return (
               <section className="mb-8">
-                <h3 className="mb-3 text-lg font-semibold text-slate-700">Outras pecas</h3>
+                <h3 className="mb-3 text-lg font-semibold text-slate-700">Outras peças</h3>
                 <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {extraCatItems.map((item) => (
                     <WardrobeItemCard
@@ -420,7 +420,7 @@ export function WardrobePage() {
         <>
           {!isLoading && displayedItems.length === 0 ? (
             <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-slate-600">
-              Nenhuma peca encontrada para este filtro.
+              Nenhuma peça encontrada para este filtro.
             </p>
           ) : null}
 
@@ -523,10 +523,10 @@ function WardrobeItemCard({ item, mediaApi, onEdit }: WardrobeItemCardProps) {
           </div>
           <div>
             <dt className="inline font-medium">Marca:</dt>{' '}
-            <dd className="inline">{item.brand ?? 'Nao informada'}</dd>
+            <dd className="inline">{item.brand ?? 'Não informada'}</dd>
           </div>
           <div>
-            <dt className="inline font-medium">Preco:</dt>{' '}
+            <dt className="inline font-medium">Preço:</dt>{' '}
             <dd className="inline">{formatPrice(item.price)}</dd>
           </div>
         </dl>
@@ -543,6 +543,6 @@ function WardrobeItemCard({ item, mediaApi, onEdit }: WardrobeItemCardProps) {
 }
 
 function formatPrice(value: number | null) {
-  if (value === null) return 'Nao informado'
+  if (value === null) return 'Não informado'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }

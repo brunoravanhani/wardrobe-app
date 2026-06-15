@@ -121,7 +121,7 @@ public sealed class WardrobeItemsController : ControllerBase
         var response = Map(result.Value);
         if (successStatusCode == StatusCodes.Status201Created)
         {
-            return CreatedAtAction(nameof(ListAsync), response);
+            return CreatedAtAction(null, response);
         }
 
         return Ok(response);

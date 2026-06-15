@@ -128,7 +128,7 @@ export function WishlistPage() {
       setEditor(null)
       await loadItems()
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel salvar o item da wishlist.'
+      const message = error instanceof Error ? error.message : 'Não foi possível salvar o item da wishlist.'
       setSubmitError(message)
     } finally {
       setIsSaving(false)
@@ -156,7 +156,7 @@ export function WishlistPage() {
       setConversionSuccessMessage('Convertido para guarda-roupa com sucesso.')
       await loadItems()
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Nao foi possivel converter o item.'
+      const message = error instanceof Error ? error.message : 'Não foi possível converter o item.'
       setConversionError(message)
     } finally {
       setIsSaving(false)
@@ -202,7 +202,7 @@ export function WishlistPage() {
       <div
         className="mb-5 flex flex-wrap gap-6 border-b border-stone-200"
         role="tablist"
-        aria-label="Visualizacao da wishlist"
+        aria-label="Visualização da wishlist"
       >
         <ViewTab
           active={viewMode === 'active'}
@@ -213,7 +213,7 @@ export function WishlistPage() {
         />
         <ViewTab
           active={viewMode === 'history'}
-          label="Historico"
+          label="Histórico"
           onClick={() => {
             setViewMode('history')
           }}
@@ -254,7 +254,7 @@ export function WishlistPage() {
 
       {!isLoading && items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-slate-600">
-          Nenhum item encontrado nesta visualizacao.
+          Nenhum item encontrado nesta visualização.
         </p>
       ) : null}
 
@@ -281,7 +281,7 @@ export function WishlistPage() {
               </div>
 
               {item.brand ? <p className="text-sm text-slate-600">{item.brand}</p> : null}
-              <p className="text-sm font-medium text-slate-800">Preco alvo: {formatPrice(item.targetPrice)}</p>
+              <p className="text-sm font-medium text-slate-800">Preço alvo: {formatPrice(item.targetPrice)}</p>
 
               {item.links.length > 0 ? (
                 <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm">

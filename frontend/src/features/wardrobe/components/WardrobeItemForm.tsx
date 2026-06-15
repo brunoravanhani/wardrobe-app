@@ -73,9 +73,9 @@ export function WardrobeItemForm({
   const [careTagImageFile, setCareTagImageFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
 
-  const title = mode === 'create' ? 'Nova peca do guarda-roupa' : 'Editar peca do guarda-roupa'
+  const title = mode === 'create' ? 'Nova peça do guarda-roupa' : 'Editar peça do guarda-roupa'
 
-  const submitLabel = mode === 'create' ? 'Salvar peca' : 'Salvar alteracoes'
+  const submitLabel = mode === 'create' ? 'Salvar peça' : 'Salvar alterações'
 
   const categoryOptions = useMemo(
     () =>
@@ -92,20 +92,20 @@ export function WardrobeItemForm({
     const nextErrors: FormErrors = {}
 
     if (!name.trim()) {
-      nextErrors.name = 'Nome da peca e obrigatorio.'
+      nextErrors.name = 'Nome da peça é obrigatório.'
     }
 
     if (!size.trim()) {
-      nextErrors.size = 'Tamanho e obrigatorio.'
+      nextErrors.size = 'Tamanho é obrigatório.'
     }
 
     const parsedPrice = parsePrice(price)
     if (price.trim().length > 0 && parsedPrice === null) {
-      nextErrors.price = 'Preco invalido. Use numeros positivos, ex.: 199,90.'
+      nextErrors.price = 'Preço inválido. Use números positivos, ex.: 199,90.'
     }
 
     if (parsedPrice !== null && parsedPrice < 0) {
-      nextErrors.price = 'Preco nao pode ser negativo.'
+      nextErrors.price = 'Preço não pode ser negativo.'
     }
 
     const bodyImageError = validateImage(bodyImageFile)
@@ -138,7 +138,7 @@ export function WardrobeItemForm({
     <form
       onSubmit={handleSubmit}
       className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm"
-      aria-label="Formulario de peca"
+      aria-label="Formulário de peça"
     >
       <h3 className="mb-4 text-lg font-semibold text-slate-900">{title}</h3>
 
@@ -162,14 +162,14 @@ export function WardrobeItemForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="name">
-          Nome da peca
+          Nome da peça
           <input
             id="name"
             name="name"
             className="rounded-md border border-slate-300 px-3 py-2"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Ex.: Camiseta basica azul"
+            placeholder="Ex.: Camiseta básica azul"
             required
           />
           {errors.name ? <span className="text-sm text-red-700">{errors.name}</span> : null}
@@ -202,7 +202,7 @@ export function WardrobeItemForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="price">
-          Preco (R$)
+          Preço (R$)
           <input
             id="price"
             name="price"
@@ -218,7 +218,7 @@ export function WardrobeItemForm({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="bodyImageFile">
-          Foto da peca (JPG, PNG ou WebP)
+          Foto da peça (JPG, PNG ou WebP)
           <input
             id="bodyImageFile"
             name="bodyImageFile"
@@ -289,7 +289,7 @@ function validateImage(file: File | null): string | null {
   }
 
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    return 'Formato invalido. Use somente JPG, PNG ou WebP.'
+    return 'Formato inválido. Use somente JPG, PNG ou WebP.'
   }
 
   if (file.size > MAX_IMAGE_SIZE_BYTES) {

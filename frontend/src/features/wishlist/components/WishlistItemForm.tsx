@@ -78,7 +78,7 @@ export function WishlistItemForm({
   const [errors, setErrors] = useState<FormErrors>({})
 
   const title = mode === 'create' ? 'Novo item da wishlist' : 'Editar item da wishlist'
-  const submitLabel = mode === 'create' ? 'Salvar desejo' : 'Salvar alteracoes'
+  const submitLabel = mode === 'create' ? 'Salvar desejo' : 'Salvar alterações'
 
   const categoryOptions = useMemo(
     () =>
@@ -95,14 +95,14 @@ export function WishlistItemForm({
     const nextErrors: FormErrors = {}
 
     if (!name.trim()) {
-      nextErrors.name = 'Nome do item e obrigatorio.'
+      nextErrors.name = 'Nome do item é obrigatório.'
     }
 
     const parsedPrice = parsePrice(targetPrice)
     if (parsedPrice === null) {
-      nextErrors.targetPrice = 'Preco alvo obrigatorio. Use numeros positivos, ex.: 299,90.'
+      nextErrors.targetPrice = 'Preço alvo obrigatório. Use números positivos, ex.: 299,90.'
     } else if (parsedPrice < 0) {
-      nextErrors.targetPrice = 'Preco alvo nao pode ser negativo.'
+      nextErrors.targetPrice = 'Preço alvo não pode ser negativo.'
     }
 
     const filledRows = linkRows.filter((r) => r.url.trim().length > 0)
@@ -135,7 +135,7 @@ export function WishlistItemForm({
     <form
       onSubmit={handleSubmit}
       className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm"
-      aria-label="Formulario de item da wishlist"
+      aria-label="Formulário de item da wishlist"
     >
       <h3 className="mb-4 text-lg font-semibold text-slate-900">{title}</h3>
 
@@ -184,7 +184,7 @@ export function WishlistItemForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-targetPrice">
-          Preco alvo (R$)
+          Preço alvo (R$)
           <input
             id="wishlist-targetPrice"
             name="targetPrice"
@@ -253,7 +253,7 @@ export function WishlistItemForm({
       </fieldset>
 
       <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-inspirationImageFile">
-        Imagem de inspiracao (JPG, PNG ou WebP)
+        Imagem de inspiração (JPG, PNG ou WebP)
         <input
           id="wishlist-inspirationImageFile"
           name="inspirationImageFile"
@@ -313,7 +313,7 @@ function validateLinkRows(rows: LinkRow[]): string | null {
         return 'Use apenas links com http:// ou https://.'
       }
     } catch {
-      return 'Informe uma URL valida em cada linha de link.'
+      return 'Informe uma URL válida em cada linha de link.'
     }
   }
 
@@ -326,7 +326,7 @@ function validateImage(file: File | null): string | null {
   }
 
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    return 'Formato invalido. Use somente JPG, PNG ou WebP.'
+    return 'Formato inválido. Use somente JPG, PNG ou WebP.'
   }
 
   if (file.size > MAX_IMAGE_SIZE_BYTES) {

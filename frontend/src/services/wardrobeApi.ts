@@ -13,15 +13,30 @@ export type ClothingCategory = (typeof CLOTHING_CATEGORIES)[number]
 const CATEGORY_LABELS_PT_BR: Record<ClothingCategory, string> = {
   TShirt: 'Camiseta',
   Shirt: 'Camisa social',
-  Pants: 'Calca',
-  Trousers: 'Calca social',
-  Shorts: 'Shorts',
+  Pants: 'Calça',
+  Trousers: 'Calça social',
+  Shorts: 'Bermuda',
   Coats: 'Casacos',
-  Shoes: 'Calcados',
+  Shoes: 'Calçados',
 }
 
 export function getCategoryLabelPtBr(category: ClothingCategory): string {
   return CATEGORY_LABELS_PT_BR[category]
+}
+
+const NUMERIC_TO_CATEGORY: Record<number, ClothingCategory> = {
+  1: 'TShirt',
+  2: 'Shirt',
+  3: 'Pants',
+  4: 'Trousers',
+  5: 'Shorts',
+  6: 'Coats',
+  7: 'Shoes',
+}
+
+export function coerceCategoryString(raw: ClothingCategory | number): ClothingCategory {
+  if (typeof raw === 'number') return NUMERIC_TO_CATEGORY[raw] ?? CLOTHING_CATEGORIES[0]
+  return raw
 }
 
 export type WardrobeItem = {
