@@ -5,6 +5,7 @@ import {
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
 import type { WishlistLink } from '../../../services/wishlistApi'
+import { ImageFileInput } from '../../../components/ImageFileInput'
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -252,17 +253,17 @@ export function WishlistItemForm({
         {errors.links ? <span className="mt-1 block text-sm text-red-700">{errors.links}</span> : null}
       </fieldset>
 
-      <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="wishlist-inspirationImageFile">
-        Imagem de inspiração (JPG, PNG ou WebP)
-        <input
+      <div className="mt-3">
+        <ImageFileInput
           id="wishlist-inspirationImageFile"
           name="inspirationImageFile"
-          type="file"
+          label="Imagem de inspiração (JPG, PNG ou WebP)"
           accept="image/jpeg,image/png,image/webp"
-          onChange={(event) => setInspirationImageFile(event.target.files?.[0] ?? null)}
+          value={inspirationImageFile}
+          onChange={setInspirationImageFile}
+          error={errors.inspirationImageFile}
         />
-        {errors.inspirationImageFile ? <span className="text-sm text-red-700">{errors.inspirationImageFile}</span> : null}
-      </label>
+      </div>
 
       {submitError ? <p className="mt-3 text-sm text-red-700">{submitError}</p> : null}
 

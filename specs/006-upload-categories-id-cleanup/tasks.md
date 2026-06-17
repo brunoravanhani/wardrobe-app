@@ -16,11 +16,11 @@ Suggested order: B → A → C. Each block is independently shippable.
 
 ## Change A — Styled File-Upload Control
 
-- [ ] A1. Create `frontend/src/components/ImageFileInput.tsx` (hidden native input + styled "Escolher imagem" button + filename / "Nenhum arquivo selecionado").
-- [ ] A2. Unit test for `ImageFileInput` (placeholder, filename on selection, `accept` forwarded, `error` rendered) — fails before, passes after.
-- [ ] A3. Adopt `ImageFileInput` for `bodyImageFile` and `careTagImageFile` in `WardrobeItemForm.tsx`; keep `validateImage` + error display.
-- [ ] A4. Adopt `ImageFileInput` for the image input in `WishlistItemForm.tsx`.
-- [ ] A5. Update existing form/e2e tests/selectors that targeted the native file input.
+- [x] A1. Create `frontend/src/components/ImageFileInput.tsx` (sr-only native input triggered by a styled "Escolher imagem" button + filename / "Nenhum arquivo selecionado"). Label kept associated to the input via `htmlFor`.
+- [x] A2. Unit test for `ImageFileInput` (placeholder, filename on selection, `accept` forwarded, label association, `error` rendered) — `ImageFileInput.test.tsx`, 4/4 pass.
+- [x] A3. Adopt `ImageFileInput` for `bodyImageFile` and `careTagImageFile` in `WardrobeItemForm.tsx`; `validateImage` + error display unchanged.
+- [x] A4. Adopt `ImageFileInput` for the inspiration image in `WishlistItemForm.tsx`.
+- [x] A5. No e2e/selector changes needed — the field `<label>`→file-input association is preserved, so `getByLabel(...)` + `setInputFiles` still resolve the input (guarded by the A2 association test). Typecheck clean; no new unit-test regressions.
 
 ## Change C — Move ID Value Objects to Their Own File
 
