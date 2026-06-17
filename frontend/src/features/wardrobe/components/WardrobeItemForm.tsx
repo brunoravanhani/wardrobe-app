@@ -4,6 +4,7 @@ import {
   getCategoryLabelPtBr,
   type ClothingCategory,
 } from '../../../services/wardrobeApi'
+import { ImageFileInput } from '../../../components/ImageFileInput'
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -217,29 +218,25 @@ export function WardrobeItemForm({
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="bodyImageFile">
-          Foto da peça (JPG, PNG ou WebP)
-          <input
-            id="bodyImageFile"
-            name="bodyImageFile"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(event) => setBodyImageFile(event.target.files?.[0] ?? null)}
-          />
-          {errors.bodyImageFile ? <span className="text-sm text-red-700">{errors.bodyImageFile}</span> : null}
-        </label>
+        <ImageFileInput
+          id="bodyImageFile"
+          name="bodyImageFile"
+          label="Foto da peça (JPG, PNG ou WebP)"
+          accept="image/jpeg,image/png,image/webp"
+          value={bodyImageFile}
+          onChange={setBodyImageFile}
+          error={errors.bodyImageFile}
+        />
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-800" htmlFor="careTagImageFile">
-          Foto da etiqueta de cuidado (JPG, PNG ou WebP)
-          <input
-            id="careTagImageFile"
-            name="careTagImageFile"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(event) => setCareTagImageFile(event.target.files?.[0] ?? null)}
-          />
-          {errors.careTagImageFile ? <span className="text-sm text-red-700">{errors.careTagImageFile}</span> : null}
-        </label>
+        <ImageFileInput
+          id="careTagImageFile"
+          name="careTagImageFile"
+          label="Foto da etiqueta de cuidado (JPG, PNG ou WebP)"
+          accept="image/jpeg,image/png,image/webp"
+          value={careTagImageFile}
+          onChange={setCareTagImageFile}
+          error={errors.careTagImageFile}
+        />
       </div>
 
       {submitError ? <p className="mt-3 text-sm text-red-700">{submitError}</p> : null}

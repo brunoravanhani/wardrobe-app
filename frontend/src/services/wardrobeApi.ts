@@ -6,6 +6,8 @@ export const CLOTHING_CATEGORIES = [
   'Shorts',
   'Coats',
   'Shoes',
+  'Polo',
+  'Accessories',
 ] as const
 
 export type ClothingCategory = (typeof CLOTHING_CATEGORIES)[number]
@@ -18,6 +20,8 @@ const CATEGORY_LABELS_PT_BR: Record<ClothingCategory, string> = {
   Shorts: 'Bermuda',
   Coats: 'Casacos',
   Shoes: 'Calçados',
+  Polo: 'Polo',
+  Accessories: 'Acessórios',
 }
 
 export function getCategoryLabelPtBr(category: ClothingCategory): string {
@@ -32,6 +36,8 @@ const NUMERIC_TO_CATEGORY: Record<number, ClothingCategory> = {
   5: 'Shorts',
   6: 'Coats',
   7: 'Shoes',
+  8: 'Polo',
+  9: 'Accessories',
 }
 
 export function coerceCategoryString(raw: ClothingCategory | number): ClothingCategory {
