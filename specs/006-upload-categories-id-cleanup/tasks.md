@@ -24,9 +24,9 @@ Suggested order: B → A → C. Each block is independently shippable.
 
 ## Change C — Move ID Value Objects to Their Own File
 
-- [ ] C1. Create `backend/src/VirtualWardrobe.Domain/Common/Identifiers.cs` (namespace `VirtualWardrobe.Domain.Common`).
-- [ ] C2. Cut the eight `XxxId` structs from `Entity.cs` and paste them verbatim into `Identifiers.cs`; leave `Entity.cs` with only `Entity<TId>`.
-- [ ] C3. Regression gate: backend builds and `dotnet test` (UnitTests, IntegrationTests, ContractTests) passes; confirm the diff touches only `Entity.cs` and `Identifiers.cs`.
+- [x] C1. Create `backend/src/VirtualWardrobe.Domain/Common/Identifiers.cs` (namespace `VirtualWardrobe.Domain.Common`).
+- [x] C2. Cut the eight `XxxId` structs from `Entity.cs` and paste them verbatim into `Identifiers.cs`; `Entity.cs` now holds only `Entity<TId>` (-48 lines).
+- [x] C3. Regression gate: build clean (0 warnings/errors); `dotnet test` 65/65 pass (34 unit + 16 integration + 15 contract); diff touches only `Entity.cs` and the new `Identifiers.cs`.
 
 ## Final Verification
 
