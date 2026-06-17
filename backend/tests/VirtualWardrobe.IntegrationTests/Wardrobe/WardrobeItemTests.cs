@@ -78,6 +78,35 @@ public sealed class WardrobeItemTests
         Assert.Empty(afterDelete);
     }
 
+    [Theory]
+    [InlineData(ClothingCategory.Polo)]
+    [InlineData(ClothingCategory.Accessories)]
+    public async Task WardrobeItemWithNewCategoryShouldPersistAndRoundTrip(ClothingCategory category)
+    {
+        await using var dbContext = CreateDbContext();
+
+        var ownerId = Guid.NewGuid();
+        var command = CreateCommand(dbContext);
+
+        var createResult = await command.CreateAsync(
+            new CreateWardrobeItemInput(
+                ownerId,
+                category,
+                "Peça",
+                "M",
+                null,
+                null,
+                null,
+                null),
+            CancellationToken.None);
+
+        Assert.True(createResult.IsSuccess);
+
+        var list = await command.ListAsync(ownerId, category, CancellationToken.None);
+        Assert.Single(list);
+        Assert.Equal(category, list[0].Category);
+    }
+
     private static CreateWardrobeItemCommand CreateCommand(VirtualWardrobeDbContext dbContext)
     {
         var wardrobeRepository = new EfWardrobeItemRepository(dbContext);

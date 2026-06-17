@@ -6,13 +6,13 @@ Suggested order: B → A → C. Each block is independently shippable.
 
 ## Change B — New Categories
 
-- [ ] B1. Add `Polo = 8` and `Accessories = 9` to `ClothingCategory.cs`.
-- [ ] B2. Grep for exhaustive `switch`/maps over `ClothingCategory`; add arms where required by the compiler/analyzer.
-- [ ] B3. Backend test: wardrobe create/list round-trip accepts and returns `"Polo"` and `"Accessories"` (fails before, passes after).
-- [ ] B4. Frontend: append `'Polo'`, `'Accessories'` to `CLOTHING_CATEGORIES` in `wardrobeApi.ts`.
-- [ ] B5. Frontend: add pt-BR labels `Polo: 'Polo'`, `Accessories: 'Acessórios'`.
-- [ ] B6. Frontend: extend `NUMERIC_TO_CATEGORY` with `8: 'Polo'`, `9: 'Accessories'`.
-- [ ] B7. Frontend test: both categories appear in the form dropdown with correct pt-BR labels.
+- [x] B1. Add `Polo = 8` and `Accessories = 9` to `ClothingCategory.cs`.
+- [x] B2. Grep for exhaustive `switch`/maps over `ClothingCategory`; add arms where required by the compiler/analyzer. (None found — categories flow through enum-name parsing and the central frontend maps.)
+- [x] B3. Backend test: wardrobe create/list round-trip accepts and returns `"Polo"` and `"Accessories"` (`WardrobeItemTests` `[Theory]`, 3/3 pass).
+- [x] B4. Frontend: append `'Polo'`, `'Accessories'` to `CLOTHING_CATEGORIES` in `wardrobeApi.ts`.
+- [x] B5. Frontend: add pt-BR labels `Polo: 'Polo'`, `Accessories: 'Acessórios'`.
+- [x] B6. Frontend: extend `NUMERIC_TO_CATEGORY` with `8: 'Polo'`, `9: 'Accessories'`.
+- [x] B7. Frontend test: `categories.test.ts` covers list membership, pt-BR labels, and numeric coercion (3/3 pass).
 
 ## Change A — Styled File-Upload Control
 

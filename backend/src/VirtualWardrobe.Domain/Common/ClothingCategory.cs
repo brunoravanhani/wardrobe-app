@@ -8,5 +8,7 @@ public enum ClothingCategory
     Trousers = 4,
     Shorts = 5,
     Coats = 6,
-    Shoes = 7
+    Shoes = 7,
+    Polo = 8,
+    Accessories = 9
 }
