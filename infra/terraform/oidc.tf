@@ -27,11 +27,13 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Only the environment-gated jobs assume this role (infra plan-apply →
+    # production; destroy → production-destroy). No bare-branch / pull_request
+    # subject is trusted, so PR jobs cannot reach AWS.
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:${var.github_repo}:ref:refs/heads/main",
         "repo:${var.github_repo}:environment:production",
         "repo:${var.github_repo}:environment:production-destroy",
       ]

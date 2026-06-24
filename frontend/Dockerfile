@@ -6,9 +6,11 @@ FROM node:20-alpine AS build
 WORKDIR /app
 RUN npm install -g pnpm@9
 
-# Vite bakes these at build time (non-secret). VITE_API_BASE_URL=/api keeps the
-# SPA same-origin behind Caddy, so no CORS.
-ARG VITE_API_BASE_URL=/api
+# Vite bakes these at build time (non-secret). An EMPTY VITE_API_BASE_URL keeps
+# API calls root-relative (the services request `/v1/...` and `/api/health`), so
+# everything is same-origin behind Caddy — no CORS. Must stay defined (empty
+# string), not unset, or the app falls back to the localhost dev URL.
+ARG VITE_API_BASE_URL=
 ARG VITE_GOOGLE_CLIENT_ID
 ARG VITE_DEFAULT_LOCALE=pt-BR
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \

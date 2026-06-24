@@ -90,11 +90,12 @@ frontend/.dockerignore
    restores/publishes `VirtualWardrobe.Api`; `mcr.microsoft.com/dotnet/aspnet:8.0`
    runs as a non-root user; `ASPNETCORE_HTTP_PORTS=8080`. Add `.dockerignore`.
 6. **Frontend `Dockerfile`** — `node:20` runs `pnpm install --frozen-lockfile`
-   and `pnpm build` with `VITE_API_BASE_URL=/api`, `VITE_GOOGLE_CLIENT_ID`,
-   `VITE_DEFAULT_LOCALE=pt-BR` as build args; copy `dist` into a `caddy:2` image
-   together with the `Caddyfile`. Add `.dockerignore`.
-7. **`Caddyfile`** — single site `{$SITE_ADDRESS}`: `handle /api/*` →
-   `reverse_proxy api:8080`; `handle` → `root * /srv` + `try_files {path}
+   and `vite build` with `VITE_API_BASE_URL=` (empty → root-relative API calls),
+   `VITE_GOOGLE_CLIENT_ID`, `VITE_DEFAULT_LOCALE=pt-BR` as build args; copy `dist`
+   into a `caddy:2` image. The `Caddyfile` is bind-mounted at runtime. Add `.dockerignore`.
+7. **`Caddyfile`** — single site `{$SITE_ADDRESS}`: a `path /v1/* /api/*` matcher
+   → `reverse_proxy api:8080` (the app's controllers are under `/v1/*`; `/api/health`
+   is the probe — no path rewrite); `handle` → `root * /srv` + `try_files {path}
    /index.html` (SPA fallback) + `file_server`; `encode gzip`. Automatic HTTPS
    from the hostname.
 8. **`docker-compose.yml`** — services `web` (ports 80/443, named volume for
@@ -133,9 +134,10 @@ frontend/.dockerignore
 
 ## Section 4 — CI/CD Workflows
 
-19. **`infra.yml`** — PR (paths `infra/**`): `terraform fmt -check`, `validate`,
-    `plan` (post plan). `main`: `apply` gated by a `production` Environment manual
-    approval. AWS auth via OIDC role; remote state from `backend.tf`.
+19. **`infra.yml`** — PR (paths `infra/terraform/**`): `terraform fmt -check`,
+    `init -backend=false`, `validate`, with no cloud credentials. `main`: a
+    `plan` + `apply` job gated by a `production` Environment manual approval; this
+    job assumes the OIDC role and uses remote state from `backend.tf`.
 20. **`deploy.yml`** — push to `main` + `workflow_dispatch`: build/push
     `vw-api` and `vw-web` images to GHCR tagged `${{ github.sha }}`; `ssh-action`
     to the instance to write `/opt/app/.env` from secrets, set `IMAGE_TAG`,

@@ -71,8 +71,9 @@ built in CI and published to GHCR; the instance only pulls and runs them.
 
 ### Runtime topology (Docker Compose on the instance)
 
-- `web` (Caddy): serves the SPA `dist`, reverse-proxies `/api/*` to `api:8080`,
-  terminates TLS via automatic Let's Encrypt for `${SITE_ADDRESS}`
+- `web` (Caddy): serves the SPA `dist`, reverse-proxies the API paths
+  (`/v1/*` — the app's controllers — and `/api/*` for the health probe) to
+  `api:8080` unchanged, terminates TLS via automatic Let's Encrypt for `${SITE_ADDRESS}`
   (`<static-ip>.sslip.io`). Persists certs in a named volume.
 - `api` (.NET 8): listens on `:8080`, reads configuration from `/opt/app/.env`,
   runs as non-root.
@@ -88,8 +89,8 @@ built in CI and published to GHCR; the instance only pulls and runs them.
    **Then** the public IP and the `sslip.io` hostname are unchanged.
 3. **Given** the running stack, **When** a browser requests `https://<host>/`,
    **Then** the SPA is served over a valid Let's Encrypt certificate.
-4. **Given** the running stack, **When** the SPA calls `/api/...`, **Then** the
-   request is proxied to the `api` container with no CORS error (same origin).
+4. **Given** the running stack, **When** the SPA calls `/v1/...` (or `/api/health`),
+   **Then** the request is proxied to the `api` container with no CORS error (same origin).
 
 ### Out of scope (v1)
 
@@ -171,8 +172,9 @@ deploy workflow from GitHub Actions Secrets on every release:
 | `Cors__AllowedOrigins__0` | the `sslip.io` URL (same-origin anyway) |
 | `SITE_ADDRESS` | `<static-ip>.sslip.io` (for Caddy) |
 
-Frontend build-time, baked into the bundle in CI (non-secret): `VITE_API_BASE_URL=/api`,
-`VITE_GOOGLE_CLIENT_ID`, `VITE_DEFAULT_LOCALE=pt-BR`.
+Frontend build-time, baked into the bundle in CI (non-secret): `VITE_API_BASE_URL=`
+(empty → root-relative; the SPA calls `/v1/...` and `/api/health` same-origin via
+Caddy), `VITE_GOOGLE_CLIENT_ID`, `VITE_DEFAULT_LOCALE=pt-BR`.
 
 ### Acceptance Scenarios
 
@@ -226,9 +228,12 @@ A `infra/terraform/` module provisions and outputs everything above:
 
 ### Target state
 
-- **`infra.yml`** — on PRs touching `infra/**`: `terraform fmt -check`,
-  `validate`, and `plan`. On merge to `main`: `apply`, gated by a GitHub
-  Environment protection rule (manual approval). AWS auth via OIDC.
+- **`infra.yml`** — on PRs touching `infra/terraform/**`: `terraform fmt -check`
+  + `init -backend=false` + `validate`, with **no cloud credentials** (so a
+  `pull_request` never needs to assume the AWS role). On merge to `main`: a
+  `plan` + `apply` job gated by a GitHub Environment protection rule (manual
+  approval); this is the only job that assumes the OIDC role
+  (`…:environment:production`).
 - **`deploy.yml`** — on push to `main` (and `workflow_dispatch`):
   1. Build the API and frontend images, tag with the git SHA, push to GHCR.
   2. SSH to the instance using the Terraform-provided key; write `/opt/app/.env`
@@ -258,8 +263,9 @@ A `infra/terraform/` module provisions and outputs everything above:
    built and pushed to GHCR tagged with the commit SHA.
 2. **Given** the deploy step, **When** it finishes, **Then** the instance is
    running the new image tag and the health check returns 200.
-3. **Given** a Terraform change in a PR, **When** `infra.yml` runs, **Then** a
-   plan is produced for review and `apply` only runs after approval on `main`.
+3. **Given** a Terraform change in a PR, **When** `infra.yml` runs, **Then** it is
+   format-checked and validated (no AWS access); `plan` + `apply` run only on
+   `main` after the `production` environment approval.
 4. **Given** `destroy.yml`, **When** it is dispatched with a non-matching
    `confirm` input, **Then** the job fails before any resource is touched.
 5. **Given** `destroy.yml` dispatched with the correct `confirm` phrase and
