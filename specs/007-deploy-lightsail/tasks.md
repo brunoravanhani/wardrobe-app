@@ -13,12 +13,17 @@ Suggested order: S (app code) → C (containers) → T (terraform) → W (workfl
 
 ## Containers C
 
-- [ ] C1. `backend/src/VirtualWardrobe.Api/Dockerfile` — multi-stage sdk:8.0 → aspnet:8.0, non-root, `ASPNETCORE_HTTP_PORTS=8080`; add `.dockerignore`.
-- [ ] C2. `frontend/Dockerfile` — `node:20` build with `VITE_API_BASE_URL=/api`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEFAULT_LOCALE=pt-BR` build args; copy `dist` into a `caddy:2` image; add `.dockerignore`.
-- [ ] C3. `deploy/Caddyfile` — `{$SITE_ADDRESS}`: `/api/*` → `reverse_proxy api:8080`; SPA static + `try_files … /index.html`; `encode gzip`; automatic HTTPS.
-- [ ] C4. `deploy/docker-compose.yml` — `web` (80/443, cert volume) + `api` (`env_file /opt/app/.env`, expose 8080), `restart: unless-stopped`, GHCR images tagged `${IMAGE_TAG}`.
-- [ ] C5. `deploy/.env.example` — every runtime variable from spec Section 4 as placeholders.
-- [ ] C6. Local validation: `docker compose config` parses; build both images locally.
+- [x] C1. `backend/src/VirtualWardrobe.Api/Dockerfile` — multi-stage sdk:8.0 → aspnet:8.0, non-root `app` user, `ASPNETCORE_HTTP_PORTS=8080`, cached restore layer (copies `Directory.Build.props` + the 4 src csproj before `dotnet restore`). `backend/.dockerignore` added. Build context = `backend/`.
+- [x] C2. `frontend/Dockerfile` — `node:20-alpine` → `caddy:2-alpine` serving `/srv`. Uses **pnpm** (`npm i -g pnpm@9`, `pnpm install --frozen-lockfile --ignore-workspace`) to match CLAUDE.md + the maintained `pnpm-lock.yaml`. Builds via `pnpm exec vite build` (see C6 note). VITE_* passed as build args. `frontend/.dockerignore` added.
+- [x] C3. `deploy/Caddyfile` — `{$SITE_ADDRESS}`: `handle /api/*` → `reverse_proxy api:8080`; SPA `root /srv` + `try_files {path} /index.html`; `encode gzip`; automatic HTTPS from the hostname. Provided to the web container via bind mount (kept as editable infra config, not baked).
+- [x] C4. `deploy/docker-compose.yml` — `web` (Caddy, 80/443, `caddy_data`/`caddy_config` volumes, Caddyfile bind mount) + `api` (`env_file: .env`, expose 8080), both `restart: unless-stopped`, GHCR images `ghcr.io/${GHCR_OWNER}/vw-{api,web}:${IMAGE_TAG}`. `build:` sections included for local builds; instance uses `pull` + `up -d` (no build).
+- [x] C5. `deploy/.env.example` — every runtime variable from spec Section 4 as `<placeholder>` values (passes the CI secret-audit).
+- [x] C6. Validated locally: `docker compose config` parses; **both images build**; end-to-end smoke test passed — Caddy serves the SPA (200) and proxies `/api/health` → `api:8080` → `200 {"status":"ok"}` (single origin, no CORS).
+
+### C — Pre-existing issues found (not fixed; out of scope, flagged for follow-up)
+- `frontend` `pnpm build` (`tsc -b && vite build`) is **broken repo-wide**: `vite@^8` vs `vitest@^3.2` (expects vite 7) makes the `test` field in `vite.config.ts` fail `tsc -b`. The image therefore runs `vite build` directly (the bundler step that produces `dist`); type-checking stays a CI concern. `vite.config.ts` left unchanged.
+- `frontend/package-lock.json` is **stale / out of sync** with `package.json` (so `npm ci` fails) — the Dockerfile uses pnpm instead. Consider regenerating or removing the npm lockfile.
+- `frontend/pnpm-workspace.yaml` contains placeholder junk (`esbuild: set this to true or false`), which breaks `pnpm install`; the build uses `--ignore-workspace` to bypass it.
 
 ## Terraform T
 
