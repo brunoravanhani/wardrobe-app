@@ -27,16 +27,16 @@ Suggested order: S (app code) → C (containers) → T (terraform) → W (workfl
 
 ## Terraform T
 
-- [ ] T1. Bootstrap remote state: S3 bucket + DynamoDB lock table; wire `backend.tf`.
-- [ ] T2. `providers.tf` + `variables.tf` (region, `instance_bundle` default 1 GB e.g. `nano_2_0`, `db_bundle`, `github_repo`, `ssh_allow_cidrs`, `site_address`).
-- [ ] T3. `compute.tf` — `aws_lightsail_instance` (Ubuntu 22.04, 1 GB) + `cloud-init.yaml` (Docker + Compose plugin, swap file for 1 GB headroom, create `/opt/app`).
-- [ ] T4. `network.tf` — static IP + attachment; `instance_public_ports` 22 (restricted to `ssh_allow_cidrs`), 80, 443.
-- [ ] T5. `keypair.tf` — `aws_lightsail_key_pair`; sensitive private-key output.
-- [ ] T6. `database.tf` — `aws_lightsail_database` (PostgreSQL 15, smallest bundle, backups on, `publicly_accessible = false`) + `random_password`.
-- [ ] T7. `storage.tf` — `import` existing `wardrobe-assets-…` bucket; public-access block; IAM user + access key + presign-only policy; `prevent_destroy = true` on the bucket.
-- [ ] T8. `oidc.tf` — GitHub OIDC provider + role scoped to this repo for infra/destroy workflows.
-- [ ] T9. `outputs.tf` — static IP, `sslip_host`, DB endpoint, SSH key, IAM keys (sensitive).
-- [ ] T10. `terraform fmt`/`validate`/`plan` clean; idempotent re-plan shows no drift (incl. imported bucket).
+- [x] T1. `backend.tf` wires the S3 + DynamoDB lock backend. The bucket + table are a documented one-time bootstrap (commands in the file header), intentionally **not** managed here so `destroy` can't remove the state describing it.
+- [x] T2. `providers.tf` (aws/random/tls pinned, `default_tags`) + `variables.tf` (region, `availability_zone`, `instance_bundle` default **`micro_2_0` = 1 GB** — note `nano_2_0` is 512 MB, not 1 GB — `db_bundle`, `db_name`/`db_username`, `github_repo`, `ssh_allow_cidrs`, `assets_bucket_name`).
+- [x] T3. `compute.tf` — `aws_lightsail_instance` (`ubuntu_22_04`, 1 GB) + `cloud-init.yaml` (Docker CE + compose plugin from the official repo, 2 GB swap file + `vm.swappiness=10`, creates `/opt/app`).
+- [x] T4. `network.tf` — `aws_lightsail_static_ip` + attachment; `aws_lightsail_instance_public_ports` 22 (restricted to `ssh_allow_cidrs`), 80, 443.
+- [x] T5. `keypair.tf` — `aws_lightsail_key_pair`; private key exported as a sensitive output.
+- [x] T6. `database.tf` — `aws_lightsail_database` (`postgres_15`, `micro_2_0`, backups on, `publicly_accessible = false`, `skip_final_snapshot`) + `random_password` (no specials, to keep the connection string clean).
+- [x] T7. `storage.tf` — `import {}` block adopts the existing `wardrobe-assets-087730237728` bucket; public-access block; presign IAM user + access key + scoped `GetObject`/`PutObject`/`DeleteObject` policy; `prevent_destroy = true` on the bucket.
+- [x] T8. `oidc.tf` — GitHub OIDC provider (thumbprint via `tls_certificate` data source) + role scoped to `repo:<owner/repo>` main / `production` / `production-destroy` envs.
+- [x] T9. `outputs.tf` — static IP, `sslip_host`, `site_address`, DB endpoint/port, ready-built `connection_string`, SSH key, presign IAM keys, OIDC role ARN (sensitive where applicable).
+- [x] T10. `terraform fmt -recursive` clean; `terraform init -backend=false` + `terraform validate` → **"Success! The configuration is valid."** (Terraform v1.14.7). `plan` needs real AWS creds + the bootstrapped backend → runs in `infra.yml` / first bring-up, not locally.
 
 ## Workflows W
 
