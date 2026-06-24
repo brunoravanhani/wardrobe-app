@@ -47,7 +47,6 @@ variable "ssh_allow_cidrs" {
 }
 
 variable "assets_bucket_name" {
-  description = "Existing private S3 bucket holding wardrobe media (imported, retained)."
+  description = "Existing private S3 bucket holding wardrobe media (imported, retained). Provided via secrets/tfvars."
   type        = string
-  default     = "wardrobe-assets-087730237728"
 }

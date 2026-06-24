@@ -5,7 +5,7 @@ Lightsail. After it, every push to `main` deploys automatically.
 
 ## 0. Prerequisites
 
-- AWS account with the existing `wardrobe-assets-087730237728` S3 bucket.
+- AWS account with the existing private S3 bucket holding wardrobe media (name supplied via secrets).
 - AWS CLI + Terraform ≥ 1.6 locally (only for the bootstrap + first apply).
 - Repo admin rights (to create Environments, Secrets, Variables).
 
@@ -61,7 +61,7 @@ Settings → Environments → create two, each with **required reviewers** (your
 | ---------------------- | --------------------------------------- |
 | `AWS_REGION`           | `us-east-1`                             |
 | `AWS_ROLE_ARN`         | `terraform output github_oidc_role_arn` |
-| `AWS_S3_BUCKET`        | `wardrobe-assets-087730237728`          |
+| `AWS_S3_BUCKET`        | existing private media bucket name      |
 | `INSTANCE_HOST`        | `terraform output static_ip`            |
 | `SITE_ADDRESS`         | `terraform output sslip_host` (e.g. `1-2-3-4.sslip.io`) |
 | `VITE_GOOGLE_CLIENT_ID`| Google OAuth client id (public)         |

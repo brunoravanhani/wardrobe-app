@@ -33,7 +33,7 @@ Suggested order: S (app code) → C (containers) → T (terraform) → W (workfl
 - [x] T4. `network.tf` — `aws_lightsail_static_ip` + attachment; `aws_lightsail_instance_public_ports` 22 (restricted to `ssh_allow_cidrs`), 80, 443.
 - [x] T5. `keypair.tf` — `aws_lightsail_key_pair`; private key exported as a sensitive output.
 - [x] T6. `database.tf` — `aws_lightsail_database` (`postgres_15`, `micro_2_0`, backups on, `publicly_accessible = false`, `skip_final_snapshot`) + `random_password` (no specials, to keep the connection string clean).
-- [x] T7. `storage.tf` — `import {}` block adopts the existing `wardrobe-assets-087730237728` bucket; public-access block; presign IAM user + access key + scoped `GetObject`/`PutObject`/`DeleteObject` policy; `prevent_destroy = true` on the bucket.
+- [x] T7. `storage.tf` — `import {}` block adopts the existing media bucket (name from `assets_bucket_name`, supplied via secrets/tfvars); public-access block; presign IAM user + access key + scoped `GetObject`/`PutObject`/`DeleteObject` policy; `prevent_destroy = true` on the bucket.
 - [x] T8. `oidc.tf` — GitHub OIDC provider (thumbprint via `tls_certificate` data source) + role scoped to `repo:<owner/repo>` main / `production` / `production-destroy` envs.
 - [x] T9. `outputs.tf` — static IP, `sslip_host`, `site_address`, DB endpoint/port, ready-built `connection_string`, SSH key, presign IAM keys, OIDC role ARN (sensitive where applicable).
 - [x] T10. `terraform fmt -recursive` clean; `terraform init -backend=false` + `terraform validate` → **"Success! The configuration is valid."** (Terraform v1.14.7). `plan` needs real AWS creds + the bootstrapped backend → runs in `infra.yml` / first bring-up, not locally.
