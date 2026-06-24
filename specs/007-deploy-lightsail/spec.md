@@ -197,8 +197,8 @@ Caddy), `VITE_GOOGLE_CLIENT_ID`, `VITE_DEFAULT_LOCALE=pt-BR`.
 
 A `infra/terraform/` module provisions and outputs everything above:
 
-- **State backend**: S3 bucket + DynamoDB lock table (a one-time bootstrap,
-  documented; cannot self-host its own state).
+- **State backend**: S3 bucket only, with S3-native locking (no DynamoDB) — a
+  one-time bootstrap, documented; cannot self-host its own state.
 - **Resources**: `aws_lightsail_instance`, `aws_lightsail_static_ip` (+
   attachment), `aws_lightsail_instance_public_ports`, `aws_lightsail_key_pair`,
   `aws_lightsail_database` (+ `random_password`), imported `aws_s3_bucket` with

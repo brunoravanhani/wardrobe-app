@@ -11,24 +11,25 @@ Lightsail. After it, every push to `main` deploys automatically.
 
 ## 1. Bootstrap the Terraform state backend (once)
 
-These two resources are deliberately **not** managed by Terraform so `destroy.yml`
-can never delete the state that describes the stack.
+The state bucket is deliberately **not** managed by Terraform so `destroy.yml`
+can never delete the state that describes the stack. State locking is handled
+natively by S3 (`use_lockfile`) — there is no DynamoDB lock table.
+
+The bucket name is the **repository name**, supplied at init time via the
+`TF_STATE_BUCKET` secret. The state file lives under the `virtual-wardrobe/`
+folder. Create the bucket once (replace `<repository-name>` with your repo name):
 
 ```bash
-aws s3api create-bucket --bucket virtual-wardrobe-tfstate --region us-east-1
-aws s3api put-bucket-versioning --bucket virtual-wardrobe-tfstate \
+aws s3api create-bucket --bucket <repository-name> --region us-east-1
+aws s3api put-bucket-versioning --bucket <repository-name> \
     --versioning-configuration Status=Enabled
-aws dynamodb create-table --table-name virtual-wardrobe-tflock \
-    --attribute-definitions AttributeName=LockID,AttributeType=S \
-    --key-schema AttributeName=LockID,KeyType=HASH \
-    --billing-mode PAY_PER_REQUEST --region us-east-1
 ```
 
 ## 2. First `terraform apply` (locally, with admin creds)
 
 ```bash
 cd infra/terraform
-terraform init
+terraform init -backend-config="bucket=<repository-name>"
 terraform apply        # imports the S3 bucket, provisions everything else
 ```
 
@@ -70,6 +71,7 @@ Settings → Environments → create two, each with **required reviewers** (your
 
 | Secret                       | Source                                         |
 | ---------------------------- | ---------------------------------------------- |
+| `TF_STATE_BUCKET`            | the repository name (state bucket from step 1) |
 | `DB_CONNECTION_STRING`       | `terraform output -raw connection_string`      |
 | `JWT_SIGNING_KEY`            | your 32+ char key                              |
 | `GOOGLE_CLIENT_SECRET`       | Google OAuth client secret                     |
@@ -84,6 +86,7 @@ gh variable set AWS_REGION --body us-east-1
 gh variable set AWS_ROLE_ARN --body "$(terraform -chdir=infra/terraform output -raw github_oidc_role_arn)"
 gh variable set INSTANCE_HOST --body "$(terraform -chdir=infra/terraform output -raw static_ip)"
 gh variable set SITE_ADDRESS --body "$(terraform -chdir=infra/terraform output -raw sslip_host)"
+gh secret set TF_STATE_BUCKET --body "<repository-name>"
 gh secret set DB_CONNECTION_STRING --body "$(terraform -chdir=infra/terraform output -raw connection_string)"
 gh secret set SSH_PRIVATE_KEY --body "$(terraform -chdir=infra/terraform output -raw ssh_private_key)"
 gh secret set PRESIGN_ACCESS_KEY_ID --body "$(terraform -chdir=infra/terraform output -raw presign_access_key_id)"

@@ -13,7 +13,7 @@ Provision and continuously deliver Virtual Wardrobe on Amazon Lightsail:
   private endpoint + TLS.
 - **Storage** — the **existing S3 bucket is imported** and retained; presign access
   via a scoped IAM user (Lightsail has no instance role).
-- **IaC** — a `infra/terraform/` module with an S3 + DynamoDB state backend.
+- **IaC** — a `infra/terraform/` module with an S3-only state backend (S3-native locking).
 - **CI/CD** — `infra.yml` (plan/apply), `deploy.yml` (build → GHCR → SSH →
   compose → health check), and a manual, guarded `destroy.yml`.
 - **App change** — a guarded `RunMigrationsOnStartup` startup migration + a
@@ -43,7 +43,7 @@ secret values into source.
 
 ```
 infra/terraform/
-  backend.tf            # S3 remote state + DynamoDB lock
+  backend.tf            # S3 remote state (S3-native locking, no DynamoDB)
   providers.tf          # aws provider + region var
   variables.tf          # region, instance_bundle (default 1 GB), db_bundle, github_repo, ssh_allow_cidrs, site_address
   network.tf            # static IP + attachment + instance_public_ports (22/80/443)
@@ -107,7 +107,7 @@ frontend/.dockerignore
 
 ## Section 3 — Terraform
 
-10. **State backend** — bootstrap an S3 bucket + DynamoDB lock table (documented
+10. **State backend** — bootstrap an S3 bucket (S3-native locking, no DynamoDB; documented
     one-time step in `quickstart.md`); wire `backend.tf`.
 11. **providers/variables** — `aws` provider pinned; vars for region,
     `instance_bundle` (default the 1 GB bundle, e.g. `nano_2_0`), `db_bundle`,

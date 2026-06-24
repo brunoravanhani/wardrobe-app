@@ -68,7 +68,7 @@ jobs:
           terraform_version: "1.14.7"
 
       - name: Init
-        run: terraform init -input=false
+        run: terraform init -input=false -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
 
       - name: Plan
         run: terraform plan -input=false -no-color

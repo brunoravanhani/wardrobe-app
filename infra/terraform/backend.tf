@@ -1,26 +1,28 @@
-# Remote state backend.
+# Remote state backend (S3-only).
 #
-# Bootstrap (one-time, documented in quickstart.md) creates the S3 bucket and the
-# DynamoDB lock table BEFORE this backend can be initialised. These two resources
-# are intentionally NOT managed by this configuration so that `terraform destroy`
-# can never remove the state that describes it.
+# Bootstrap (one-time, documented in quickstart.md) creates the S3 bucket BEFORE
+# this backend can be initialised. The bucket is intentionally NOT managed by this
+# configuration so that `terraform destroy` can never remove the state that
+# describes it. There is no DynamoDB lock table: state locking is handled natively
+# by S3 (conditional writes) via `use_lockfile`.
 #
-#   aws s3api create-bucket --bucket virtual-wardrobe-tfstate --region us-east-1
-#   aws s3api put-bucket-versioning --bucket virtual-wardrobe-tfstate \
+#   aws s3api create-bucket --bucket <repository-name> --region us-east-1
+#   aws s3api put-bucket-versioning --bucket <repository-name> \
 #       --versioning-configuration Status=Enabled
-#   aws dynamodb create-table --table-name virtual-wardrobe-tflock \
-#       --attribute-definitions AttributeName=LockID,AttributeType=S \
-#       --key-schema AttributeName=LockID,KeyType=HASH \
-#       --billing-mode PAY_PER_REQUEST --region us-east-1
+#
+# The bucket name is supplied at init time (partial backend config) from the
+# TF_STATE_BUCKET secret, e.g.:
+#
+#   terraform init -backend-config="bucket=$TF_STATE_BUCKET"
 
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0"
 
   backend "s3" {
-    bucket         = "virtual-wardrobe-tfstate"
-    key            = "lightsail/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "virtual-wardrobe-tflock"
-    encrypt        = true
+    # bucket is provided at init time via -backend-config (TF_STATE_BUCKET secret).
+    key          = "virtual-wardrobe/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }

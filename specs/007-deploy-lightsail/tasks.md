@@ -27,7 +27,7 @@ Suggested order: S (app code) → C (containers) → T (terraform) → W (workfl
 
 ## Terraform T
 
-- [x] T1. `backend.tf` wires the S3 + DynamoDB lock backend. The bucket + table are a documented one-time bootstrap (commands in the file header), intentionally **not** managed here so `destroy` can't remove the state describing it.
+- [x] T1. `backend.tf` wires the S3-only backend (S3-native locking via `use_lockfile`, no DynamoDB). The bucket is supplied at init time from the `TF_STATE_BUCKET` secret (the repository name) and the state file lives under the `virtual-wardrobe/` folder. The bucket is a documented one-time bootstrap, intentionally **not** managed here so `destroy` can't remove the state describing it.
 - [x] T2. `providers.tf` (aws/random/tls pinned, `default_tags`) + `variables.tf` (region, `availability_zone`, `instance_bundle` default **`micro_2_0` = 1 GB** — note `nano_2_0` is 512 MB, not 1 GB — `db_bundle`, `db_name`/`db_username`, `github_repo`, `ssh_allow_cidrs`, `assets_bucket_name`).
 - [x] T3. `compute.tf` — `aws_lightsail_instance` (`ubuntu_22_04`, 1 GB) + `cloud-init.yaml` (Docker CE + compose plugin from the official repo, 2 GB swap file + `vm.swappiness=10`, creates `/opt/app`).
 - [x] T4. `network.tf` — `aws_lightsail_static_ip` + attachment; `aws_lightsail_instance_public_ports` 22 (restricted to `ssh_allow_cidrs`), 80, 443.

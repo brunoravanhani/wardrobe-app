@@ -46,7 +46,7 @@ jobs:
           terraform_version: "1.14.7"
 
       - name: Init
-        run: terraform init -input=false
+        run: terraform init -input=false -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
 
       - name: Destroy
         run: terraform destroy -input=false -auto-approve
