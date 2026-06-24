@@ -40,10 +40,10 @@ Suggested order: S (app code) → C (containers) → T (terraform) → W (workfl
 
 ## Workflows W
 
-- [ ] W1. `.github/workflows/infra.yml` — PR (`infra/**`): fmt-check + validate + plan; `main`: apply gated by `production` Environment approval; OIDC auth.
-- [ ] W2. `.github/workflows/deploy.yml` — push to `main` + dispatch: build/push `vw-api` + `vw-web` to GHCR (`${{ github.sha }}`); SSH write `/opt/app/.env`, set `IMAGE_TAG`, `compose pull && up -d`, prune; curl `/api/health`, fail on non-200.
-- [ ] W3. `.github/workflows/destroy.yml` — `workflow_dispatch` only; `confirm` input must equal `destroy-virtual-wardrobe` (fail fast otherwise); `production-destroy` Environment approval; OIDC; `terraform destroy -auto-approve` (S3 bucket + state backend excluded via `prevent_destroy`).
-- [ ] W4. Configure repo Environments (`production`, `production-destroy`) with reviewers; add Secrets (DB pieces, JWT key, Google client id/secret, SSH key, AWS presign keys) and Variables (`SITE_ADDRESS`, `VITE_GOOGLE_CLIENT_ID`).
+- [x] W1. `.github/workflows/infra.yml` — `plan` job on PR + push (paths `infra/terraform/**`): OIDC creds, `fmt -check`, `init`, `validate`, `plan`. `apply` job on push only, `environment: production` (manual approval). Pinned Terraform 1.14.7.
+- [x] W2. `.github/workflows/deploy.yml` — push to `main` (paths backend/frontend/deploy) + dispatch. `build-push` job: buildx + GHCR login, build/push `vw-api` + `vw-web` tagged `${{ github.sha }}` & `latest` (gha cache); web gets `VITE_*` build args. `deploy` job (`environment: production`): renders `/opt/app/.env` from Secrets/Variables, `scp` compose+Caddyfile+.env, SSH `docker login` + `compose pull && up -d --remove-orphans` + `image prune`, then polls `/api/health` 30×10s and fails on non-200.
+- [x] W3. `.github/workflows/destroy.yml` — `workflow_dispatch` only; first step fails unless `inputs.confirm == 'destroy-virtual-wardrobe'`; `environment: production-destroy` (manual approval); OIDC; `terraform destroy -auto-approve`. S3 bucket + state backend excluded via `prevent_destroy` / unmanaged backend.
+- [x] W4. Documented in [quickstart.md](./quickstart.md): create `production` + `production-destroy` Environments with reviewers; Variables (`AWS_REGION`, `AWS_ROLE_ARN`, `AWS_S3_BUCKET`, `INSTANCE_HOST`, `SITE_ADDRESS`, `VITE_GOOGLE_CLIENT_ID`) and Secrets (`DB_CONNECTION_STRING`, `JWT_SIGNING_KEY`, `GOOGLE_CLIENT_SECRET`, `PRESIGN_ACCESS_KEY_ID`, `PRESIGN_SECRET_ACCESS_KEY`, `SSH_PRIVATE_KEY`) — with `gh` one-liners sourcing Terraform outputs. **Manual repo-admin step; not automatable from here.**
 
 ## Bring-Up R
 
