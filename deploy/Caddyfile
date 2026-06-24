@@ -1,0 +1,20 @@
+# SITE_ADDRESS is injected from the environment (e.g. <static-ip>.sslip.io).
+# Caddy obtains and renews a Let's Encrypt certificate for it automatically.
+{$SITE_ADDRESS} {
+	encode gzip
+
+	# API: the app's controllers live under /v1/* (wardrobe, wishlist, media,
+	# auth); /api/health is the deploy health probe. Both go to the api container
+	# unchanged (no path rewrite — the SPA calls these paths root-relative).
+	@backend path /v1/* /api/*
+	handle @backend {
+		reverse_proxy api:8080
+	}
+
+	# SPA: serve the static build and fall back to index.html for client routes.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

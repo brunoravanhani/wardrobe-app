@@ -1,0 +1,154 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "deploy/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write # push images to GHCR
+
+jobs:
+  build-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    outputs:
+      owner: ${{ steps.vars.outputs.owner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute lowercase owner
+        id: vars
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/src/VirtualWardrobe.Api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.owner }}/vw-api:${{ github.sha }}
+            ghcr.io/${{ steps.vars.outputs.owner }}/vw-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=
+            VITE_DEFAULT_LOCALE=pt-BR
+            VITE_GOOGLE_CLIENT_ID=${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.owner }}/vw-web:${{ github.sha }}
+            ghcr.io/${{ steps.vars.outputs.owner }}/vw-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Lightsail
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: production # reuse the approval gate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render /opt/app/.env
+        env:
+          GHCR_OWNER: ${{ needs.build-push.outputs.owner }}
+          IMAGE_TAG: ${{ github.sha }}
+          SITE_ADDRESS: ${{ vars.SITE_ADDRESS }}
+          CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          AWS_S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.PRESIGN_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PRESIGN_SECRET_ACCESS_KEY }}
+        run: |
+          cat > app.env <<EOF
+          GHCR_OWNER=${GHCR_OWNER}
+          IMAGE_TAG=${IMAGE_TAG}
+          SITE_ADDRESS=${SITE_ADDRESS}
+          ASPNETCORE_ENVIRONMENT=Production
+          RunMigrationsOnStartup=true
+          ConnectionStrings__Default=${CONNECTION_STRING}
+          Jwt__Issuer=virtual-wardrobe-api
+          Jwt__Audience=virtual-wardrobe-web
+          Jwt__SigningKey=${JWT_SIGNING_KEY}
+          Jwt__AccessTokenMinutes=1440
+          Auth__Google__ClientId=${GOOGLE_CLIENT_ID}
+          Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+          AWS__Region=${{ vars.AWS_REGION }}
+          AWS__S3__BucketName=${AWS_S3_BUCKET}
+          AWS__AccessKeyId=${AWS_ACCESS_KEY_ID}
+          AWS__SecretAccessKey=${AWS_SECRET_ACCESS_KEY}
+          AWS__S3__UploadUrlExpirationMinutes=10
+          AWS__S3__ViewUrlExpirationMinutes=5
+          Cors__AllowedOrigins__0=https://${SITE_ADDRESS}
+          VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+          EOF
+
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_lightsail
+          chmod 600 ~/.ssh/id_lightsail
+          ssh-keyscan -H "${{ vars.INSTANCE_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Copy compose + Caddyfile + .env to instance
+        env:
+          HOST: ${{ vars.INSTANCE_HOST }}
+        run: |
+          scp -i ~/.ssh/id_lightsail deploy/docker-compose.yml "ubuntu@${HOST}:/opt/app/docker-compose.yml"
+          scp -i ~/.ssh/id_lightsail deploy/Caddyfile         "ubuntu@${HOST}:/opt/app/Caddyfile"
+          scp -i ~/.ssh/id_lightsail app.env                  "ubuntu@${HOST}:/opt/app/.env"
+
+      - name: Pull & restart stack
+        env:
+          HOST: ${{ vars.INSTANCE_HOST }}
+        run: |
+          ssh -i ~/.ssh/id_lightsail "ubuntu@${HOST}" bash -s <<EOF
+          set -euo pipefail
+          cd /opt/app
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker compose pull
+          docker compose up -d --remove-orphans
+          docker image prune -f
+          EOF
+
+      - name: Health check
+        env:
+          SITE_ADDRESS: ${{ vars.SITE_ADDRESS }}
+        run: |
+          echo "Waiting for https://${SITE_ADDRESS}/api/health ..."
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "https://${SITE_ADDRESS}/api/health" || true)
+            if [ "$CODE" = "200" ]; then
+              echo "Health check OK (200)."
+              exit 0
+            fi
+            echo "Attempt $i: got '$CODE', retrying in 10s (TLS issuance may still be pending)..."
+            sleep 10
+          done
+          echo "Health check failed: never returned 200."
+          exit 1

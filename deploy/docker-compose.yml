@@ -1,0 +1,48 @@
+# Runtime stack for the Lightsail instance.
+# On the instance the images are pulled from GHCR (no build):
+#   docker compose pull && docker compose up -d
+# Locally you can build both images:
+#   docker compose build
+#
+# Compose auto-loads `deploy/.env` for ${...} interpolation, and the `api`
+# service also receives it as its runtime environment via env_file.
+
+services:
+  api:
+    image: ghcr.io/${GHCR_OWNER}/vw-api:${IMAGE_TAG:-latest}
+    build:
+      context: ../backend
+      dockerfile: src/VirtualWardrobe.Api/Dockerfile
+    env_file:
+      - .env
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/${GHCR_OWNER}/vw-web:${IMAGE_TAG:-latest}
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        # Empty → root-relative API calls (/v1/*, /api/health) same-origin via Caddy.
+        VITE_API_BASE_URL: ""
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_DEFAULT_LOCALE: pt-BR
+    environment:
+      # Caddy reads SITE_ADDRESS from the Caddyfile; the web tier needs no secrets.
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in deploy/.env}
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

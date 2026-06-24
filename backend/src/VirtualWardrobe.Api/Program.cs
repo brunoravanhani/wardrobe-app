@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddApiHosting();
 
 var app = builder.Build();
+app.MigrateDatabaseIfEnabled();
 app.UseApiHosting();
 
 app.Run();

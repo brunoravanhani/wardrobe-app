@@ -1,0 +1,77 @@
+name: Infra
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["infra/terraform/**", ".github/workflows/infra.yml"]
+  push:
+    branches: [main]
+    paths: ["infra/terraform/**", ".github/workflows/infra.yml"]
+
+# OIDC token is only needed by the plan-apply job (push/main). The validate job
+# runs with no AWS access at all.
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_WORKING_DIR: infra/terraform
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  # PRs (and every push) get format + validation with NO cloud credentials, so a
+  # pull_request never needs to assume the AWS role.
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.7"
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+
+      - name: Init (no backend)
+        run: terraform init -backend=false -input=false
+
+      - name: Validate
+        run: terraform validate
+
+  # Real plan + apply only on main, behind the production approval gate. This is
+  # the only step that assumes the AWS role (sub = repo:…:environment:production).
+  plan-apply:
+    name: Plan & Apply
+    if: github.event_name == 'push'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production # manual approval gate
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.7"
+
+      - name: Init
+        run: terraform init -input=false -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
+
+      - name: Plan
+        run: terraform plan -input=false -no-color
+
+      - name: Apply
+        run: terraform apply -input=false -auto-approve

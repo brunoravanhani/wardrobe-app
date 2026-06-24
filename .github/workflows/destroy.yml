@@ -1,0 +1,52 @@
+name: Destroy
+
+# Manual only. Tears down compute / DB / static IP / IAM / key pair.
+# The S3 assets bucket (prevent_destroy) and the state backend are NOT touched.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy-virtual-wardrobe" to confirm'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_WORKING_DIR: infra/terraform
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  destroy:
+    name: Terraform destroy
+    runs-on: ubuntu-latest
+    environment: production-destroy # separate manual-approval gate
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - name: Verify confirmation phrase
+        if: ${{ inputs.confirm != 'destroy-virtual-wardrobe' }}
+        run: |
+          echo "Confirmation phrase mismatch. Aborting."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.7"
+
+      - name: Init
+        run: terraform init -input=false -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
+
+      - name: Destroy
+        run: terraform destroy -input=false -auto-approve
