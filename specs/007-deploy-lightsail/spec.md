@@ -1,0 +1,338 @@
+# Feature Specification: Deploy to AWS Lightsail via Terraform + GitHub Actions
+
+**Feature Branch**: `007-deploy-lightsail`
+
+**Created**: 2026-06-24
+
+**Status**: Clarified
+
+## Overview
+
+Stand up a production deployment of Virtual Wardrobe on **Amazon Lightsail**, with
+infrastructure as code (**Terraform**) and continuous delivery (**GitHub
+Actions**). The three runtime tiers map to Lightsail as follows:
+
+1. **Compute (backend + frontend)** — a single **Lightsail instance** (1 GB
+   Ubuntu) running **Docker Compose**. Two containers: a `web` container (Caddy)
+   that serves the React SPA build *and* reverse-proxies `/api/*`, plus an `api`
+   container running the .NET 8 Web API. Single origin → no CORS.
+
+2. **Database** — a **Lightsail managed PostgreSQL** instance (public mode off),
+   reachable from the compute instance over its private endpoint with TLS.
+
+3. **Image storage** — the **existing private S3 bucket** is retained unchanged;
+   the API continues to issue owner-only presigned URLs.
+
+TLS is provided automatically by Caddy via Let's Encrypt against a
+`<static-ip>.sslip.io` hostname (no custom domain in v1). Container images are
+built in CI and published to GHCR; the instance only pulls and runs them.
+
+---
+
+## Clarifications
+
+### Session 2026-06-24
+
+- Q: Which Lightsail compute model? → A: **Single VM + Docker Compose** (not the
+  managed Container Service). One Lightsail instance runs the whole compose stack.
+- Q: Instance size? → A: **1 GB bundle** (`nano`/`micro` class, e.g.
+  `nano_2_0`). Images are built in CI, so the box only runs the runtime
+  containers; 1 GB is accepted with the understanding that headroom is tight (see
+  Risks).
+- Q: How is PostgreSQL hosted? → A: **Lightsail managed database** (automated
+  backups + patching), **public mode disabled**.
+- Q: Custom domain or default endpoint? → A: **No custom domain in v1.** Use a
+  `<static-ip>.sslip.io` hostname so Caddy can obtain a real Let's Encrypt
+  certificate (required because Google OAuth rejects non-HTTPS redirect URIs on
+  public hosts). Swapping in a real domain later is a one-line Caddyfile change.
+- Q: Where do images get built and stored? → A: **Built in GitHub Actions**,
+  pushed to **GHCR**, pulled onto the instance. The instance never compiles code.
+- Q: How are database migrations applied? → A: **On API startup**, behind a
+  `RunMigrationsOnStartup` flag (the managed DB's private endpoint is not
+  reachable from GitHub runners, so a separate CI migration job is avoided).
+
+---
+
+## Section 1 — Compute Instance (Lightsail VM)
+
+### Target state
+
+- One `aws_lightsail_instance`: Ubuntu 22.04, **1 GB bundle**, in the chosen
+  region (default `us-east-1`).
+- `cloud-init` `user_data` installs Docker Engine + the Compose plugin on first
+  boot. No application code is built on the box.
+- A `aws_lightsail_static_ip` is attached so the public IP (and therefore the
+  `sslip.io` hostname and TLS cert) is stable across reboots.
+- Instance firewall (`aws_lightsail_instance_public_ports`) opens **22** (SSH —
+  restricted to GitHub Actions / operator IP ranges where practical), **80**, and
+  **443**. Port 80 stays open for Let's Encrypt HTTP-01 + HTTPS redirect.
+- An `aws_lightsail_key_pair` provides SSH access; its private key is a
+  **sensitive Terraform output** consumed as a GitHub Actions secret for deploys.
+
+### Runtime topology (Docker Compose on the instance)
+
+- `web` (Caddy): serves the SPA `dist`, reverse-proxies `/api/*` to `api:8080`,
+  terminates TLS via automatic Let's Encrypt for `${SITE_ADDRESS}`
+  (`<static-ip>.sslip.io`). Persists certs in a named volume.
+- `api` (.NET 8): listens on `:8080`, reads configuration from `/opt/app/.env`,
+  runs as non-root.
+- Images are referenced by an immutable tag (`${IMAGE_TAG}` = git SHA) pulled
+  from GHCR; `restart: unless-stopped`.
+
+### Acceptance Scenarios
+
+1. **Given** a fresh `terraform apply`, **When** the instance finishes booting,
+   **Then** Docker and the Compose plugin are installed and the firewall exposes
+   only 22/80/443.
+2. **Given** the static IP is attached, **When** the instance is rebooted,
+   **Then** the public IP and the `sslip.io` hostname are unchanged.
+3. **Given** the running stack, **When** a browser requests `https://<host>/`,
+   **Then** the SPA is served over a valid Let's Encrypt certificate.
+4. **Given** the running stack, **When** the SPA calls `/api/...`, **Then** the
+   request is proxied to the `api` container with no CORS error (same origin).
+
+### Out of scope (v1)
+
+- Horizontal scaling / load balancing / multi-instance.
+- Custom domain and its DNS records (kept as a follow-up).
+- Blue-green or zero-downtime rollout (a brief restart on deploy is acceptable).
+
+---
+
+## Section 2 — Managed Database
+
+### Target state
+
+- One `aws_lightsail_database`: PostgreSQL 15, smallest managed bundle,
+  `apply_immediately`, automated backups enabled, **public mode disabled**.
+- Master password generated by `random_password`; never committed. Surfaced as a
+  sensitive output and assembled into the connection string consumed by the API.
+- The API connects over the managed DB's **private endpoint** with
+  `SSL Mode=Require`. The DB is reachable only from within Lightsail (the compute
+  instance), never the public internet.
+
+### Acceptance Scenarios
+
+1. **Given** the provisioned database, **When** connectivity is tested from the
+   public internet, **Then** the connection is refused (public mode off).
+2. **Given** the API container on the instance, **When** it starts, **Then** it
+   connects to the managed DB over the private endpoint using TLS.
+3. **Given** a destroyed-and-recreated instance, **When** Terraform reapplies,
+   **Then** the database and its data are unaffected (separate lifecycle).
+
+### Out of scope (v1)
+
+- Read replicas / HA standby.
+- Manual snapshot/restore tooling beyond Lightsail's automated backups.
+
+---
+
+## Section 3 — Image Storage (S3, retained)
+
+### Target state
+
+- The existing private S3 bucket (`wardrobe-assets-…`) is **imported** into
+  Terraform, not recreated. Block Public Access stays on.
+- Because Lightsail instances have **no IAM instance role**, the API authenticates
+  to S3 via a dedicated **least-privilege IAM user** (`aws_iam_user` +
+  `aws_iam_access_key`) whose policy grants only `s3:GetObject`/`s3:PutObject` on
+  the bucket. Those keys are injected into the API via `/opt/app/.env`.
+
+### Acceptance Scenarios
+
+1. **Given** the deployed API, **When** a user uploads/views an image, **Then**
+   presigned URL generation succeeds using the scoped IAM user.
+2. **Given** the S3 bucket, **When** its public access settings are inspected,
+   **Then** Block Public Access remains fully enabled.
+
+### Out of scope (v1)
+
+- Migrating images off S3 onto Lightsail object storage.
+- CloudFront / CDN in front of assets.
+
+---
+
+## Section 4 — Configuration & Secrets
+
+### Target state
+
+The instance reads all runtime config from `/opt/app/.env`, rewritten by the
+deploy workflow from GitHub Actions Secrets on every release:
+
+| Variable | Source |
+|---|---|
+| `ASPNETCORE_ENVIRONMENT=Production` | static |
+| `RunMigrationsOnStartup=true` | static |
+| `ConnectionStrings__Default` | Terraform DB endpoint + password (`SSL Mode=Require`) |
+| `Jwt__SigningKey` / `Jwt__Issuer` / `Jwt__Audience` | GitHub Secret (new strong key) |
+| `Auth__Google__ClientId` / `Auth__Google__ClientSecret` | GitHub Secret |
+| `AWS__Region` / `AWS__S3__BucketName` | Terraform output |
+| `AWS__AccessKeyId` / `AWS__SecretAccessKey` | Terraform IAM user key (presign-only) |
+| `Cors__AllowedOrigins__0` | the `sslip.io` URL (same-origin anyway) |
+| `SITE_ADDRESS` | `<static-ip>.sslip.io` (for Caddy) |
+
+Frontend build-time, baked into the bundle in CI (non-secret): `VITE_API_BASE_URL=/api`,
+`VITE_GOOGLE_CLIENT_ID`, `VITE_DEFAULT_LOCALE=pt-BR`.
+
+### Acceptance Scenarios
+
+1. **Given** a deploy run, **When** it completes, **Then** `/opt/app/.env`
+   contains every required key sourced from secrets, and no secret appears in CI
+   logs.
+2. **Given** the repository, **When** scanned, **Then** it contains no real secret
+   values (the existing CI secret-audit job still passes).
+
+### Out of scope (v1)
+
+- AWS Secrets Manager / SSM Parameter Store integration (env-file injection is the
+  v1 mechanism).
+
+---
+
+## Section 5 — Infrastructure as Code (Terraform)
+
+### Target state
+
+A `infra/terraform/` module provisions and outputs everything above:
+
+- **State backend**: S3 bucket + DynamoDB lock table (a one-time bootstrap,
+  documented; cannot self-host its own state).
+- **Resources**: `aws_lightsail_instance`, `aws_lightsail_static_ip` (+
+  attachment), `aws_lightsail_instance_public_ports`, `aws_lightsail_key_pair`,
+  `aws_lightsail_database` (+ `random_password`), imported `aws_s3_bucket` with
+  public-access block, `aws_iam_user`/`aws_iam_access_key`/scoped policy.
+- **Optional**: `aws_iam_openid_connect_provider` + role so the infra workflow
+  runs Terraform via OIDC (no long-lived AWS keys in CI).
+- **Outputs** (sensitive where applicable): static IP, `sslip.io` host, DB
+  endpoint, SSH private key, IAM access keys.
+
+### Acceptance Scenarios
+
+1. **Given** a clean account (state backend bootstrapped), **When**
+   `terraform apply` runs, **Then** all resources are created and outputs are
+   produced with no manual console steps.
+2. **Given** `terraform plan` on an unchanged config, **When** it runs, **Then**
+   it reports no drift (idempotent), including the imported S3 bucket.
+3. **Given** sensitive outputs, **When** they are displayed, **Then** Terraform
+   marks them sensitive and they are not printed in plaintext logs.
+
+### Out of scope (v1)
+
+- Multi-environment (staging/prod) workspaces — v1 ships a single environment.
+
+---
+
+## Section 6 — CI/CD (GitHub Actions)
+
+### Target state
+
+- **`infra.yml`** — on PRs touching `infra/**`: `terraform fmt -check`,
+  `validate`, and `plan`. On merge to `main`: `apply`, gated by a GitHub
+  Environment protection rule (manual approval). AWS auth via OIDC.
+- **`deploy.yml`** — on push to `main` (and `workflow_dispatch`):
+  1. Build the API and frontend images, tag with the git SHA, push to GHCR.
+  2. SSH to the instance using the Terraform-provided key; write `/opt/app/.env`
+     from secrets, set `IMAGE_TAG`, run `docker compose pull && up -d`, prune old
+     images.
+  3. Health-check `https://<host>/api/health`; fail the run on non-200.
+- **`destroy.yml`** — **manual only** (`workflow_dispatch`), never triggered by a
+  push. Tears down the Terraform-managed infrastructure (`terraform destroy`).
+  Guarded so it cannot run by accident:
+  1. A required `confirm` input that must equal a fixed phrase (e.g.
+     `destroy-virtual-wardrobe`); the job fails fast if it does not match.
+  2. Targets a dedicated GitHub Environment (e.g. `production-destroy`) with a
+     manual approval protection rule, so a reviewer must approve before destroy
+     runs.
+  3. Uses the same OIDC role and remote state as `infra.yml`, runs
+     `terraform destroy -auto-approve` after the guards pass.
+  4. The **imported S3 assets bucket is protected** — it carries
+     `prevent_destroy` / is excluded from destroy so user images are not deleted
+     by an infrastructure teardown; destroy removes compute, DB, IP, IAM user,
+     and keypair only.
+- The existing `ci.yml` (tests + secret audit) remains the merge gate and is
+  unchanged by this feature.
+
+### Acceptance Scenarios
+
+1. **Given** a push to `main`, **When** `deploy.yml` runs, **Then** images are
+   built and pushed to GHCR tagged with the commit SHA.
+2. **Given** the deploy step, **When** it finishes, **Then** the instance is
+   running the new image tag and the health check returns 200.
+3. **Given** a Terraform change in a PR, **When** `infra.yml` runs, **Then** a
+   plan is produced for review and `apply` only runs after approval on `main`.
+4. **Given** `destroy.yml`, **When** it is dispatched with a non-matching
+   `confirm` input, **Then** the job fails before any resource is touched.
+5. **Given** `destroy.yml` dispatched with the correct `confirm` phrase and
+   approval, **When** it completes, **Then** compute, DB, static IP, IAM user, and
+   keypair are destroyed while the S3 assets bucket and Terraform state backend
+   remain intact.
+
+### Out of scope (v1)
+
+- Automatic rollback on a failed health check (manual redeploy of the prior SHA
+  is the v1 remediation).
+- Migrating image registry to Amazon ECR (GHCR is the v1 choice).
+- Destroying the S3 assets bucket or the Terraform state backend via automation
+  (both are intentionally protected; teardown of those is a deliberate manual
+  act).
+
+---
+
+## Section 7 — Application Code Change
+
+### Target state
+
+- The API gains a guarded startup migration: when `RunMigrationsOnStartup` is
+  true, the app calls `DbContext.Database.Migrate()` during startup before
+  serving traffic. Default false outside Production so local/test behavior is
+  unchanged.
+- A lightweight health endpoint (`/api/health` or reuse an existing one) exists
+  for the deploy health check.
+
+### Acceptance Scenarios
+
+1. **Given** `RunMigrationsOnStartup=true` and a DB with pending migrations,
+   **When** the API starts, **Then** migrations are applied before it accepts
+   requests.
+2. **Given** the flag unset (local/test), **When** the API starts, **Then** no
+   automatic migration runs and existing tests pass unchanged.
+
+### Out of scope (v1)
+
+- A dedicated migration runner container/job (rejected; startup migration chosen).
+
+---
+
+## Risks & Decisions Baked In
+
+- **1 GB instance headroom is tight.** The .NET runtime + Caddy should fit since
+  builds happen in CI, but memory pressure under load is a known risk; mitigations
+  are swap configured via `cloud-init` and an easy Terraform bundle bump to 2 GB.
+- **`sslip.io` is third-party DNS.** It is relied on only for TLS issuance until a
+  real domain is added; failure mode and the domain-swap path are documented.
+- **SSH-based deploy** stores an SSH private key as a GitHub secret; port 22 is IP
+  restricted where practical, with SSM as a possible future hardening.
+- **No instance IAM role on Lightsail** forces an IAM-user access key for S3,
+  scoped to presign-only on the single bucket.
+
+---
+
+## Cross-Cutting Notes
+
+- **Secret Management Gate**: All runtime secrets are managed manually as GitHub
+  Actions Secrets and injected into the instance's `/opt/app/.env` at deploy time;
+  none are introduced into source by this feature. The existing CI secret-audit
+  job continues to pass.
+- **Testing Gate**: The startup-migration flag and health endpoint get automated
+  coverage that fails before and passes after. Terraform is guarded by
+  `validate`/`plan` in CI; the deploy job's health check is an integration gate.
+- **Observability Gate**: The app keeps emitting structured JSON logs to stdout,
+  captured by the Docker logging driver on the instance; key events (auth, S3
+  presign, wishlist conversion) remain instrumented.
+- **DB Versioning Gate**: Schema reaches production only through EF Core
+  migrations, applied on startup; roll-forward remains the remediation path.
+- **UX Consistency Gate**: No user-facing copy changes; pt-BR content is
+  unaffected.
+- **Performance Gate**: Single-origin proxy avoids CORS preflights; the existing
+  p95 budgets (list ≤ 2s, create/edit ≤ 3s, conversion ≤ 3s) are validated on the
+  deployed instance, with the 1 GB sizing flagged as the variable to watch.
